@@ -1,0 +1,20 @@
+{
+  "name": "followupos",
+  "version": "1.0.0",
+  "description": "AI-powered sales follow-up SaaS for service businesses",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "npm run dev --prefix server",
+    "client": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "seed": "npm run seed --prefix server",
+    "test": "npm run test --prefix server",
+    "lint": "npm run lint --prefix client && npm run lint --prefix server",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "start": "npm run start --prefix server"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
