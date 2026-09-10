@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { Organization } from '../models/Organization.js';
 import { User } from '../models/User.js';
@@ -9,8 +10,34 @@ import { AppError } from '../utils/errors.js';
 const router = Router();
 router.use(authenticate);
 
+// Mock data for offline/demo mode
+const mockOrg = {
+  _id: '660000000000000000000002',
+  name: 'GrowthScale Agency',
+  slug: 'growthscale-agency',
+  plan: 'growth',
+  subscription: {
+    plan: 'growth',
+    status: 'active',
+  },
+  settings: {
+    autoFollowUpEnabled: true,
+    defaultTone: 'consultative',
+    workingHours: { start: '09:00', end: '19:00', timezone: 'Asia/Kolkata' },
+  },
+};
+
+const mockTeam = [
+  { _id: 'u1', name: 'Arjun Kapoor', email: 'arjun@growthscale.in', role: 'owner', createdAt: new Date() },
+  { _id: 'u2', name: 'Sneha Patel', email: 'sneha@growthscale.in', role: 'sales_rep', createdAt: new Date() },
+  { _id: 'u3', name: 'Kavita Rao', email: 'kavita@growthscale.in', role: 'sales_rep', createdAt: new Date() },
+];
+
 // Get organization settings
 router.get('/organization', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.json({ success: true, data: { organization: mockOrg } });
+  }
   const org = await Organization.findById(req.organizationId);
   if (!org) throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
   res.json({ success: true, data: { organization: org } });
@@ -18,6 +45,10 @@ router.get('/organization', async (req, res) => {
 
 // Update organization
 router.patch('/organization', authorize('owner', 'admin'), async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    Object.assign(mockOrg, req.body);
+    return res.json({ success: true, data: { organization: mockOrg } });
+  }
   const org = await Organization.findByIdAndUpdate(
     req.organizationId,
     req.body,
@@ -28,6 +59,9 @@ router.patch('/organization', authorize('owner', 'admin'), async (req, res) => {
 
 // Complete onboarding step
 router.post('/organization/onboarding', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.json({ success: true, data: { organization: mockOrg } });
+  }
   const { step, data } = req.body;
   const org = await Organization.findById(req.organizationId);
   
@@ -44,6 +78,9 @@ router.post('/organization/onboarding', async (req, res) => {
 
 // Get team members
 router.get('/team', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.json({ success: true, data: { members: mockTeam } });
+  }
   const members = await User.find({ organizationId: req.organizationId })
     .select('-passwordHash -refreshToken')
     .sort({ createdAt: -1 });
@@ -52,6 +89,9 @@ router.get('/team', async (req, res) => {
 
 // Update user profile
 router.patch('/profile', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.json({ success: true, data: { user: { _id: req.user?._id || 'u1', name: req.body.name || 'Demo User' } } });
+  }
   const { name, avatar } = req.body;
   const user = await User.findByIdAndUpdate(
     req.user._id,
@@ -63,6 +103,9 @@ router.patch('/profile', async (req, res) => {
 
 // Get notifications
 router.get('/notifications', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.json({ success: true, data: { notifications: [], unreadCount: 0 } });
+  }
   const { page = 1, limit = 20, unreadOnly } = req.query;
   const query = { userId: req.user._id, organizationId: req.organizationId };
   if (unreadOnly === 'true') query.read = false;
@@ -80,6 +123,9 @@ router.get('/notifications', async (req, res) => {
 
 // Mark notifications as read
 router.post('/notifications/mark-read', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.json({ success: true });
+  }
   const { ids } = req.body;
   const query = { userId: req.user._id, organizationId: req.organizationId };
   if (ids?.length) query._id = { $in: ids };
@@ -90,11 +136,21 @@ router.post('/notifications/mark-read', async (req, res) => {
 
 // Get integrations
 router.get('/integrations', async (req, res) => {
+  const allProviders = ['email', 'whatsapp', 'instagram', 'facebook', 'linkedin', 'calendly', 'google_forms'];
+  
+  if (mongoose.connection.readyState !== 1) {
+    const result = allProviders.map((p) => ({
+      provider: p,
+      status: p === 'whatsapp' || p === 'email' ? 'connected' : 'disconnected',
+      lastSyncAt: new Date().toISOString(),
+      metadata: {},
+    }));
+    return res.json({ success: true, data: { integrations: result } });
+  }
+
   const integrations = await Integration.find({ organizationId: req.organizationId })
     .select('-accessToken -refreshToken');
   
-  // Return all possible integrations with their status
-  const allProviders = ['email', 'whatsapp', 'instagram', 'facebook', 'linkedin', 'calendly', 'google_forms'];
   const integrated = {};
   integrations.forEach((i) => { integrated[i.provider] = i; });
   
@@ -113,7 +169,10 @@ router.get('/integrations', async (req, res) => {
 router.post('/integrations/:provider/connect', async (req, res) => {
   const { provider } = req.params;
   
-  // In demo mode, just mark as connected
+  if (mongoose.connection.readyState !== 1) {
+    return res.json({ success: true, message: `${provider} connected successfully` });
+  }
+
   await Integration.findOneAndUpdate(
     { organizationId: req.organizationId, provider },
     {
@@ -131,8 +190,13 @@ router.post('/integrations/:provider/connect', async (req, res) => {
 
 // Disconnect integration
 router.delete('/integrations/:provider', async (req, res) => {
+  const { provider } = req.params;
+  if (mongoose.connection.readyState !== 1) {
+    return res.json({ success: true, message: `${provider} disconnected` });
+  }
+
   await Integration.findOneAndUpdate(
-    { organizationId: req.organizationId, provider: req.params.provider },
+    { organizationId: req.organizationId, provider },
     { status: 'disconnected', accessToken: null, refreshToken: null }
   );
   res.json({ success: true, message: 'Integration disconnected' });

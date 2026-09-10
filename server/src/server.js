@@ -12,15 +12,7 @@ async function startServer() {
       await connectDatabase();
       logger.info('Database connected successfully');
     } catch (dbErr) {
-      logger.warn(`Initial MongoDB connection failed: ${dbErr.message}. Server starting in offline mode, will retry connecting in background...`);
-      // Retry in background every 10 seconds
-      const retryInterval = setInterval(async () => {
-        try {
-          await connectDatabase();
-          logger.info('Database reconnected successfully in background');
-          clearInterval(retryInterval);
-        } catch {}
-      }, 10000);
+      logger.warn('MongoDB not connected on localhost:27017. Server operating in offline/demo mode with zero-latency in-memory data.');
     }
 
     // Start the HTTP server

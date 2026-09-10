@@ -5,37 +5,41 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(amount: number, currency = 'INR'): string {
+export function formatCurrency(amount?: number | null, currency = 'INR'): string {
+  const num = typeof amount === 'number' && !isNaN(amount) ? amount : (Number(amount) || 0)
   if (currency === 'INR') {
-    if (amount >= 100000) {
-      return `₹${(amount / 100000).toFixed(1)}L`
+    if (num >= 100000) {
+      return `₹${(num / 100000).toFixed(1)}L`
     }
-    if (amount >= 1000) {
-      return `₹${(amount / 1000).toFixed(1)}k`
+    if (num >= 1000) {
+      return `₹${(num / 1000).toFixed(1)}k`
     }
-    return `₹${amount.toLocaleString('en-IN')}`
+    return `₹${num.toLocaleString('en-IN')}`
   }
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(num)
 }
 
-export function formatNumber(n: number): string {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
-  return n.toString()
+export function formatNumber(n?: number | null): string {
+  const num = typeof n === 'number' && !isNaN(n) ? n : (Number(n) || 0)
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}k`
+  return num.toString()
 }
 
-export function getInitials(name: string): string {
+export function getInitials(name?: string | null): string {
   if (!name) return '?'
   return name
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
-    .map((n) => n[0].toUpperCase())
-    .join('')
+    .map((n) => n[0]?.toUpperCase() || '')
+    .join('') || '?'
 }
 
-export function timeAgo(date: string | Date): string {
+export function timeAgo(date?: string | Date | null): string {
+  if (!date) return ''
   const d = new Date(date)
+  if (isNaN(d.getTime())) return ''
   const now = new Date()
   const seconds = Math.floor((now.getTime() - d.getTime()) / 1000)
 
@@ -46,13 +50,14 @@ export function timeAgo(date: string | Date): string {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
-export function scoreToColor(score: number): string {
-  if (score >= 70) return 'text-red-600'
-  if (score >= 45) return 'text-orange-600'
+export function scoreToColor(score?: number | null): string {
+  const s = typeof score === 'number' && !isNaN(score) ? score : 0
+  if (s >= 70) return 'text-red-600'
+  if (s >= 45) return 'text-orange-600'
   return 'text-blue-600'
 }
 
-export function temperatureLabel(temp: string): { label: string; icon: string; className: string } {
+export function temperatureLabel(temp?: string | null): { label: string; icon: string; className: string } {
   switch (temp) {
     case 'hot':
       return { label: 'Hot', icon: '🔥', className: 'score-hot' }
@@ -63,7 +68,8 @@ export function temperatureLabel(temp: string): { label: string; icon: string; c
   }
 }
 
-export function stageLabel(stage: string): string {
+export function stageLabel(stage?: string | null): string {
+  if (!stage) return ''
   const labels: Record<string, string> = {
     new: 'New',
     contacted: 'Contacted',
@@ -76,7 +82,8 @@ export function stageLabel(stage: string): string {
   return labels[stage] || stage
 }
 
-export function sourceIcon(source: string): string {
+export function sourceIcon(source?: string | null): string {
+  if (!source) return '📌'
   const icons: Record<string, string> = {
     website: '🌐',
     whatsapp: '💬',
@@ -93,21 +100,23 @@ export function sourceIcon(source: string): string {
   return icons[source] || '📌'
 }
 
-export function truncate(str: string, maxLength: number): string {
+export function truncate(str?: string | null, maxLength = 50): string {
   if (!str) return ''
   if (str.length <= maxLength) return str
   return str.substring(0, maxLength) + '...'
 }
 
-export function formatDate(date: string | Date | undefined): string {
+export function formatDate(date: string | Date | undefined | null): string {
   if (!date) return ''
   const d = new Date(date)
+  if (isNaN(d.getTime())) return ''
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-export function getScoreColor(score: number): string {
-  if (score >= 75) return 'text-red-500 font-bold'
-  if (score >= 50) return 'text-amber-500 font-medium'
+export function getScoreColor(score?: number | null): string {
+  const s = typeof score === 'number' && !isNaN(score) ? score : 0
+  if (s >= 75) return 'text-red-500 font-bold'
+  if (s >= 50) return 'text-amber-500 font-medium'
   return 'text-blue-500 font-normal'
 }
 

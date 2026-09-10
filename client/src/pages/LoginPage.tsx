@@ -39,8 +39,8 @@ export default function LoginPage() {
   }
 
   const handleDemoLogin = () => {
-    setValue('email', 'demo@followupos.com')
-    setValue('password', 'Demo@1234')
+    setValue('email', 'shubham@gmail.com')
+    setValue('password', 'shubham123')
   }
 
   return (
@@ -102,20 +102,20 @@ export default function LoginPage() {
           </div>
 
           {/* Demo login button */}
-          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+          <div className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-indigo-900">Try the Demo</div>
-                <div className="text-xs text-indigo-700 mt-0.5">Explore with realistic sample data</div>
+                <div className="text-sm font-medium text-indigo-900 dark:text-indigo-200">Quick Fill Account</div>
+                <div className="text-xs text-indigo-700 dark:text-indigo-400 mt-0.5">shubham@gmail.com · shubham123</div>
               </div>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="border-indigo-300 text-indigo-700 hover:bg-indigo-100"
+                className="border-indigo-300 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-900"
                 onClick={handleDemoLogin}
               >
-                Use Demo Account
+                Auto-Fill
               </Button>
             </div>
           </div>

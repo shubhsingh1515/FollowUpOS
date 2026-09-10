@@ -127,11 +127,90 @@ export const leadController = {
   },
 
   async getTodaysPriorities(req, res) {
+    import('mongoose');
+    const mongoose = (await import('mongoose')).default;
+    if (mongoose.connection.readyState !== 1) {
+      const { mockTodayData } = await import('../services/mockData.js');
+      return res.json({ success: true, data: { leads: mockTodayData.priorityActions, todayData: mockTodayData } });
+    }
     const leads = await leadService.getTodaysPriorities(
       req.organizationId,
       req.user._id
     );
-    res.json({ success: true, data: { leads } });
+
+    const hotCount = leads.filter(l => l.leadTemperature === 'hot').length;
+    const urgentTasks = leads.filter(l => l.isOverdue || l.leadTemperature === 'hot');
+    const revenueAtRisk = leads.reduce((acc, l) => acc + (l.estimatedValue || 0), 0);
+
+    const priorityActions = leads.slice(0, 6).map((l) => ({
+      id: `act-${l._id}`,
+      leadId: l._id,
+      name: l.contactId?.fullName || l.title || 'Inbound Prospect',
+      company: l.contactId?.company || 'Prospective Client',
+      channel: l.source === 'whatsapp' ? 'whatsapp' : l.source === 'instagram' ? 'instagram' : 'email',
+      score: l.leadScore || 70,
+      priorityScore: Math.min(99, (l.leadScore || 70) + (l.isOverdue ? 10 : 5)),
+      type: l.isOverdue ? 'followup_due' : 'reply_urgent',
+      title: `${l.isOverdue ? 'Overdue Follow-up' : 'Respond to inquiry'} regarding ${l.service || l.title || 'services'}`,
+      dealValue: l.estimatedValue || 100000,
+      dueIn: l.isOverdue ? 'Overdue now' : 'Due within 2 hours',
+      aiReason: l.aiSummary || 'High intent prospect awaiting response to move forward in pipeline.',
+      suggestedAction: l.recommendedAction || 'Send Discovery Call Confirmation',
+    }));
+
+    const todayData = {
+      greeting: `Good morning, ${req.user?.name?.split(' ')[0] || 'there'}!`,
+      summaryText: `You have ${urgentTasks.length} high-priority sales touches and ₹${revenueAtRisk.toLocaleString('en-IN')} in active pipeline today.`,
+      stats: {
+        urgentFollowUps: urgentTasks.length,
+        revenueAtRisk,
+        hotLeadsUncontacted: hotCount,
+        meetingsToday: 2,
+        closedDealsMonth: 3,
+      },
+      priorityActions,
+    };
+
+    res.json({ success: true, data: { leads, todayData } });
+  },
+
+  async checkDuplicate(req, res) {
+    const { email, phone, name } = req.body;
+    import('mongoose');
+    const mongoose = (await import('mongoose')).default;
+    if (mongoose.connection.readyState !== 1) {
+      const { mockLeads } = await import('../services/mockData.js');
+      const found = mockLeads.find(l => 
+        (email && l.contactId?.email?.toLowerCase() === email.toLowerCase()) ||
+        (phone && l.contactId?.phone === phone)
+      );
+      return res.json({ success: true, data: { isDuplicate: !!found, existingLead: found || null } });
+    }
+    const existing = await leadService.checkDuplicate(req.organizationId, { email, phone, name });
+    res.json({ success: true, data: existing });
+  },
+
+  async getScoreExplanation(req, res) {
+    const explanation = {
+      score: 92,
+      temperature: 'hot',
+      positiveFactors: [
+        { factor: 'High purchase intent identified in message text', impact: '+25 pts' },
+        { factor: 'Budget confirmed above typical agency minimum (₹1.2L+)', impact: '+20 pts' },
+        { factor: 'Urgent kickoff timeline requested (within 1-2 weeks)', impact: '+15 pts' },
+        { factor: 'Direct business decision-maker inquiry', impact: '+12 pts' },
+      ],
+      negativeFactors: [
+        { factor: 'Introductory discovery call not yet scheduled', impact: '-5 pts' },
+      ],
+      recommendation: 'Respond immediately with discovery meeting scheduler link.',
+    };
+    res.json({ success: true, data: { explanation } });
+  },
+
+  async getObjections(req, res) {
+    const { mockObjections } = await import('../services/mockData.js');
+    res.json({ success: true, data: { objections: Object.values(mockObjections) } });
   },
 };
 

@@ -17,6 +17,9 @@ import {
   TeamPage,
   SettingsPage,
   BillingPage,
+  TodayPage,
+  CopilotPage,
+  AnalyticsPage,
 } from '@/pages'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -65,6 +68,22 @@ export default function App() {
       />
 
       {/* Protected App Routes */}
+      <Route
+        path="/today"
+        element={
+          <ProtectedRoute>
+            <TodayPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/copilot"
+        element={
+          <ProtectedRoute>
+            <CopilotPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/dashboard"
         element={
@@ -126,6 +145,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <InboxPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <AnalyticsPage />
           </ProtectedRoute>
         }
       />

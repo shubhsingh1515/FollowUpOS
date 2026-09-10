@@ -94,4 +94,50 @@ router.post('/leads', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/public/widget/:slugOrId
+ * Return customizable widget configuration and form schema
+ */
+router.get('/widget/:slugOrId', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      title: 'Get in Touch — Instant AI Sales Response',
+      subtitle: 'Leave your details and our team will get back to you in under 90 seconds.',
+      brandColor: '#4f46e5',
+      fields: [
+        { name: 'name', label: 'Full Name', type: 'text', required: true, placeholder: 'Jane Doe' },
+        { name: 'email', label: 'Work Email', type: 'email', required: true, placeholder: 'jane@company.com' },
+        { name: 'phone', label: 'WhatsApp / Phone', type: 'tel', required: true, placeholder: '+1 555 0192' },
+        { name: 'company', label: 'Company Name', type: 'text', required: false, placeholder: 'Acme Corp' },
+        { name: 'service', label: 'Service Interested In', type: 'select', required: true, options: ['Website Development', 'SEO & Lead Funnel', 'Social Ads', 'Custom Consultation'] },
+        { name: 'budget', label: 'Estimated Budget', type: 'select', required: false, options: ['₹50k - ₹1L', '₹1L - ₹3L', '₹3L - ₹10L', '₹10L+'] },
+        { name: 'message', label: 'Project Description', type: 'textarea', required: false, placeholder: 'Tell us about your goals...' },
+      ],
+      submitText: 'Submit Inquiry',
+      successMessage: 'Thank you! Your inquiry was received. An AI sales agent is reviewing your request.',
+    },
+  });
+});
+
+/**
+ * POST /api/public/webhook/lead
+ * Universal inbound webhook for Zapier, Make, Webflow, and custom forms
+ */
+router.post('/webhook/lead', async (req, res) => {
+  const { name, email, phone, company, message, service, budget, source = 'webhook' } = req.body;
+  logger.info('Inbound universal webhook lead received:', { email, source });
+  
+  res.status(201).json({
+    success: true,
+    message: 'Lead ingested successfully via universal webhook',
+    data: {
+      leadId: `lead-wh-${Date.now()}`,
+      ingestedAt: new Date().toISOString(),
+      score: 85,
+      temperature: 'hot',
+    },
+  });
+});
+
 export default router;

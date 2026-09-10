@@ -245,11 +245,21 @@ export const mockFollowUps = [
 export const mockAnalytics = {
   overview: {
     totalLeads: 142,
-    leadsChange: 24.5,
+    newLeads: 45,
     hotLeads: 38,
-    conversionRate: 18.2,
-    conversionRateChange: 3.4,
+    qualifiedLeads: 98,
+    wonDeals: 26,
+    lostDeals: 12,
+    pendingFollowUps: 14,
+    overdueFollowUps: 3,
     pipelineValue: 2840000,
+    avgLeadScore: 68,
+    conversionRate: 18.2,
+    wonRevenue: 980000,
+    lostRevenue: 240000,
+    unrespondedLeads: 8,
+    leadsChange: 24.5,
+    conversionRateChange: 3.4,
     pipelineValueChange: 15.8,
     avgResponseMinutes: 1.8,
     responseSpeedChange: -42.0,
@@ -291,3 +301,187 @@ export const mockAnalytics = {
     { name: 'Kavita Rao', role: 'Inbound SDR', leadsHandled: 30, dealsWon: 4, winRate: 25.0, revenue: 120000 },
   ],
 }
+
+export const mockTodayData = {
+  greeting: 'Good morning, Arjun!',
+  summaryText: "Here's what needs your attention right now.",
+  stats: {
+    urgentFollowUps: 4,
+    revenueAtRisk: 450000,
+    hotLeadsUncontacted: 3,
+    meetingsToday: 2,
+    closedDealsMonth: 18,
+  },
+  priorityActions: [
+    {
+      id: 'act-001',
+      leadId: 'lead-001',
+      name: 'Priya Sharma',
+      company: 'TechStartup India',
+      channel: 'whatsapp',
+      score: 92,
+      priorityScore: 98,
+      type: 'reply_urgent',
+      title: 'Reply to WhatsApp inquiry on abandoned cart redesign',
+      dealValue: 120000,
+      dueIn: 'Reply within 12 mins',
+      aiReason: 'High intent prospect asked for proposal availability and budget is confirmed.',
+      suggestedAction: 'Send Discovery Call Confirmation',
+    },
+    {
+      id: 'act-002',
+      leadId: 'lead-002',
+      name: 'Rohan Mehta',
+      company: 'Apex Global Logistics',
+      channel: 'email',
+      score: 84,
+      priorityScore: 89,
+      type: 'followup_due',
+      title: 'Send case study on 4.2x ROI before leadership review',
+      dealValue: 240000,
+      dueIn: 'Due in 2 hours',
+      aiReason: 'Reviewing 3 agency proposals today. Providing relevant proof now doubles win rate.',
+      suggestedAction: 'Send Logistics Case Study',
+    },
+    {
+      id: 'act-003',
+      leadId: 'lead-003',
+      name: 'Sarah Jenkins',
+      company: 'Beacon Health Partners',
+      channel: 'email',
+      score: 88,
+      priorityScore: 86,
+      type: 'negotiation_close',
+      title: 'Confirm 10% annual prepayment discount to close contract',
+      dealValue: 450000,
+      dueIn: 'Decision expected today',
+      aiReason: 'VP Operations indicated willingness to sign if annual billing incentive is confirmed.',
+      suggestedAction: 'Approve & Send Agreement',
+    },
+    {
+      id: 'act-004',
+      leadId: 'lead-004',
+      name: 'Amitabh Verma',
+      company: 'Verma Luxury Properties',
+      channel: 'facebook',
+      score: 68,
+      priorityScore: 78,
+      type: 'qualify_inbound',
+      title: 'Dispatch Day 2 automated WhatsApp cadence',
+      dealValue: 90000,
+      dueIn: 'Overdue by 1 hour',
+      aiReason: 'Facebook lead inquiry has not received brochure yet.',
+      suggestedAction: 'Send Property Brochure',
+    },
+  ],
+  revenueAtRisk: [
+    {
+      leadId: 'lead-003',
+      name: 'Sarah Jenkins',
+      company: 'Beacon Health Partners',
+      value: 450000,
+      reason: 'Contract sent 3 days ago with no follow-up touchpoint.',
+      urgency: 'high',
+    },
+    {
+      leadId: 'lead-002',
+      name: 'Rohan Mehta',
+      company: 'Apex Global Logistics',
+      value: 240000,
+      reason: 'Competitor proposal mentioned in last email.',
+      urgency: 'medium',
+    },
+  ],
+  leadDecay: [
+    {
+      leadId: 'lead-004',
+      name: 'Amitabh Verma',
+      company: 'Verma Luxury Properties',
+      daysSilent: 4,
+      lastScore: 78,
+      currentScore: 68,
+      recommended: 'Send low-friction question via WhatsApp to re-engage.',
+    },
+  ],
+}
+
+export const mockCopilotResponses = {
+  'which leads should i contact today': {
+    type: 'leads_list',
+    text: "Here are your top 3 highest-priority leads requiring immediate contact based on intent, deal value, and response window:",
+    leads: [
+      { id: 'lead-001', name: 'Priya Sharma', company: 'TechStartup India', score: 92, reason: 'High-intent WhatsApp inquiry for e-commerce redesign. Awaiting your call confirmation.' },
+      { id: 'lead-002', name: 'Rohan Mehta', company: 'Apex Global Logistics', score: 84, reason: 'Proposal sent 2 days ago. Competitor evaluation ongoing.' },
+      { id: 'lead-003', name: 'Sarah Jenkins', company: 'Beacon Health Partners', score: 88, reason: 'Final contract negotiations. Closing this week.' },
+    ],
+    recommendedAction: 'Click to open lead thread or generate AI responses immediately.',
+  },
+  'show me leads that haven\'t been followed up with': {
+    type: 'leads_list',
+    text: "Found 2 high-value leads with no activity in over 48 hours:",
+    leads: [
+      { id: 'lead-004', name: 'Amitabh Verma', company: 'Verma Luxury Properties', score: 68, reason: 'Inbound Meta Lead ad received 4 days ago. Sequence paused.' },
+      { id: 'lead-006', name: 'Vikram Singhania', company: 'Singhania Industrial Group', score: 74, reason: 'Enterprise inquiry on LinkedIn with no reply sent yet.' },
+    ],
+  },
+  'which hot leads haven\'t replied': {
+    type: 'leads_list',
+    text: "1 hot lead is currently waiting on reply from their team:",
+    leads: [
+      { id: 'lead-002', name: 'Rohan Mehta', company: 'Apex Global Logistics', score: 84, reason: 'Sent proposal 48h ago. AI recommends soft check-in touchpoint.' },
+    ],
+  },
+  'summarize today\'s sales activity': {
+    type: 'summary',
+    text: "Daily Sales Summary for BrightWeb Digital:\n• Inbound Leads: 6 active leads handled today\n• Follow-ups completed: 14 out of 18 scheduled\n• Pipeline Volume: ₹12,40,000 active qualified pipeline\n• Win Rate this month: 38.5%\n• Key Opportunity: Sarah Jenkins (Beacon Health) contract worth ₹4,50,000 expected to close today.",
+  },
+  'show me opportunities likely to close this month': {
+    type: 'opportunities',
+    text: "3 deals have a probability of 70%+ to close before month-end:",
+    deals: [
+      { name: 'Beacon Health Custom Intake', value: 450000, probability: 85, expectedRevenue: 382500, stage: 'Negotiation' },
+      { name: 'Apex Logistics Funnel', value: 240000, probability: 70, expectedRevenue: 168000, stage: 'Proposal' },
+      { name: 'TechStartup Redesign', value: 120000, probability: 60, expectedRevenue: 72000, stage: 'Qualified' },
+    ],
+    totalForecast: '₹6,22,500 weighted revenue',
+  },
+}
+
+export const mockObjections = {
+  price: {
+    type: 'Price Sensitivity',
+    detectedSnippet: 'Is there any discount or flexibility on the retainer cost?',
+    recommendedStrategy: 'Reinforce proven ROI & past case studies before offering any contractual concession.',
+    suggestedRebuttal: 'I completely understand budget considerations. Rather than cutting scope, our clients typically see a 3.4x ROI within 60 days which covers the investment. We could also offer a 10% prepayment benefit on annual terms.',
+  },
+  timing: {
+    type: 'Timing / Next Quarter',
+    detectedSnippet: 'We might need to push this project start to next quarter.',
+    recommendedStrategy: 'Identify the cost of delay and offer a phased milestone kickoff.',
+    suggestedRebuttal: 'Understood. Keep in mind that onboarding takes 2 weeks, so starting milestone 1 now ensures your funnel is live in time for your peak quarter without impacting your current bandwidth.',
+  },
+}
+
+export const mockCampaigns = [
+  {
+    id: 'camp-001',
+    name: 'Q1 Cold Lead Revival Cadence',
+    targetAudience: 'Leads with no response for 30+ days (Score >= 50)',
+    leadCount: 42,
+    status: 'active',
+    responseRate: 19.4,
+    aiStrategy: 'Re-engagement via value-first educational asset rather than direct sales pitch.',
+    templateMessage: 'Hi {{name}}, things move fast! We just helped a business in {{industry}} increase qualified leads by 40% with automated follow-ups. Is this still on your radar for this quarter?',
+  },
+  {
+    id: 'camp-002',
+    name: 'Post-Demo Closing Revival',
+    targetAudience: 'Proposals sent with no decision after 14 days',
+    leadCount: 18,
+    status: 'draft',
+    responseRate: 0,
+    aiStrategy: 'Overcoming ghosting with an executive check-in from agency founder.',
+    templateMessage: 'Hey {{name}}, wanted to check if you had any thoughts on the proposal or if priorities shifted? Happy to align scope to your exact timeline.',
+  },
+]
+

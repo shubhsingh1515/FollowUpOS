@@ -1,17 +1,27 @@
+import dns from 'dns';
 import mongoose from 'mongoose';
 import { config } from './config.js';
 import { logger } from '../utils/logger.js';
+
+// Resolve MongoDB Atlas SRV records reliably across Windows and ISPs
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+} catch (err) {
+  // Ignore if DNS server override is restricted
+}
 
 let isConnected = false;
 
 export async function connectDatabase() {
   if (isConnected) return;
 
+  mongoose.set('bufferCommands', false);
+
   try {
     const conn = await mongoose.connect(config.mongoUri, {
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 20000,
     });
 
     isConnected = true;
@@ -29,7 +39,8 @@ export async function connectDatabase() {
     });
 
   } catch (error) {
-    logger.error('MongoDB connection failed:', error.message);
+    isConnected = false;
+    try { await mongoose.disconnect(); } catch {}
     throw error;
   }
 }

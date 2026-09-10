@@ -22,6 +22,8 @@ import analyticsRoutes from './routes/analytics.js';
 import dealRoutes from './routes/deals.js';
 import settingsRoutes from './routes/settings.js';
 import publicRoutes from './routes/public.js';
+import copilotRoutes from './routes/copilot.js';
+import campaignsRoutes from './routes/campaigns.js';
 
 const app = express();
 
@@ -50,7 +52,7 @@ app.use(cors({
 // Rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
+  max: 2000,
   message: { success: false, message: 'Too many requests', code: 'RATE_LIMITED' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -100,6 +102,8 @@ app.use('/api/followups', followUpRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/deals', dealRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/copilot', copilotRoutes);
+app.use('/api/campaigns', campaignsRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

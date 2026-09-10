@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import mongoose from 'mongoose';
 import { Organization } from '../models/Organization.js';
 import { followUpService } from '../services/FollowUpService.js';
 import { logger } from '../utils/logger.js';
@@ -11,6 +12,11 @@ let isRunning = false;
 async function processFollowUps() {
   if (isRunning) {
     logger.debug('Follow-up processor already running, skipping...');
+    return;
+  }
+
+  if (mongoose.connection.readyState !== 1) {
+    // Database offline / demo mode; skip background DB processing
     return;
   }
 
@@ -41,6 +47,11 @@ async function processFollowUps() {
  * Start all scheduled jobs
  */
 export function startScheduler() {
+  if (mongoose.connection.readyState !== 1) {
+    logger.info('Scheduler deferred: MongoDB is offline / demo mode');
+    return;
+  }
+
   logger.info('Starting job scheduler...');
 
   // Process due follow-ups every minute

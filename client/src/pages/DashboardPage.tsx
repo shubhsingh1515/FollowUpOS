@@ -163,7 +163,7 @@ export default function DashboardPage() {
         />
         <KPICard
           title="Won Deals"
-          value={overview?.wonDeals ?? '—'}
+          value={overview?.wonDeals ?? 0}
           subtitle={overview ? formatCurrency(overview.wonRevenue, currency) : ''}
           icon={Trophy}
           iconColor="bg-yellow-100 text-yellow-600"
@@ -171,7 +171,7 @@ export default function DashboardPage() {
         />
         <KPICard
           title="Conversion"
-          value={overview ? `${overview.conversionRate}%` : '—'}
+          value={overview ? `${overview.conversionRate ?? 0}%` : '—'}
           subtitle="Win rate"
           icon={BarChart}
           iconColor="bg-purple-100 text-purple-600"
