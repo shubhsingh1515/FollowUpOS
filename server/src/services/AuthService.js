@@ -1,19 +1,18 @@
+import crypto from 'crypto';
 import { User } from '../models/User.js';
 import { Organization } from '../models/Organization.js';
 import { FollowUpSequence } from '../models/FollowUpSequence.js';
 import { generateTokens, verifyRefreshToken } from '../middleware/auth.js';
 import { AppError } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
-import { config } from '../config/config.js';
+import { mailerService } from '../utils/mailer.js';
+import { billingService } from '../billing/BillingService.js';
 
-/**
- * Create default follow-up sequence for a new organization
- */
 async function createDefaultSequence(organizationId) {
   return FollowUpSequence.create({
     organizationId,
-    name: 'Default Follow-up Sequence',
-    description: 'Automatically generated follow-up sequence',
+    name: 'Default High-Conversion Cadence',
+    description: 'Automated 4-step cadence with instant AI reply and 24h follow-up',
     isDefault: true,
     active: true,
     steps: [
@@ -21,15 +20,15 @@ async function createDefaultSequence(organizationId) {
         stepNumber: 1,
         delay: 0,
         delayUnit: 'hours',
-        name: 'Immediate response',
+        name: 'Immediate contextual response',
         useAI: true,
-        requireApproval: true,
+        requireApproval: false,
       },
       {
         stepNumber: 2,
         delay: 24,
         delayUnit: 'hours',
-        name: '24-hour follow-up',
+        name: '24-hour value follow-up',
         useAI: true,
         requireApproval: true,
       },
@@ -37,7 +36,7 @@ async function createDefaultSequence(organizationId) {
         stepNumber: 3,
         delay: 3,
         delayUnit: 'days',
-        name: '3-day follow-up',
+        name: '3-day case study / proof follow-up',
         useAI: true,
         requireApproval: true,
       },
@@ -45,7 +44,7 @@ async function createDefaultSequence(organizationId) {
         stepNumber: 4,
         delay: 6,
         delayUnit: 'days',
-        name: 'Final follow-up',
+        name: 'Breakaway closing follow-up',
         useAI: true,
         requireApproval: true,
       },
@@ -54,34 +53,46 @@ async function createDefaultSequence(organizationId) {
 }
 
 export class AuthService {
-  async register({ name, email, password, companyName, industry }) {
-    // Check if email exists
+  async register({ name, email, password, companyName, industry, phone }) {
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       throw new AppError('Email already registered', 409, 'EMAIL_EXISTS');
     }
 
-    // Create organization first
     const organization = await Organization.create({
-      name: companyName,
+      name: companyName || `${name}'s Workspace`,
       industry: industry || 'other',
-      subscription: {
-        plan: 'trial',
-        status: 'trialing',
-        trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days trial
-        limits: { leads: 50, users: 3 },
+      slug: (companyName || name).toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.random().toString(36).substring(2, 6),
+      plan: 'growth',
+      settings: {
+        subscriptionStatus: 'trialing',
       },
+      onboarding: {
+        completed: false,
+        step: 1,
+      }
     });
 
-    // Hash password and create user
     const passwordHash = await User.hashPassword(password);
+    
+    // Generate email verification token
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
     const user = await User.create({
       name,
       email: email.toLowerCase(),
+      phone: phone || null,
       passwordHash,
       role: 'owner',
       organizationId: organization._id,
+      isEmailVerified: false,
+      emailVerificationToken: verifyToken,
+      emailVerificationExpires: verifyExpires
     });
+
+    // Initialize trial subscription in BillingService
+    await billingService.getOrCreateSubscription(organization._id);
 
     // Create default follow-up sequence
     await createDefaultSequence(organization._id);
@@ -89,12 +100,21 @@ export class AuthService {
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
     
-    // Store refresh token hash
     user.refreshToken = refreshToken;
     user.lastLoginAt = new Date();
     await user.save();
 
-    logger.info('User registered', { userId: user._id, orgId: organization._id });
+    // Send transactional welcome email asynchronously
+    setImmediate(async () => {
+      try {
+        await mailerService.sendWelcomeEmail(user, organization);
+        await mailerService.sendVerificationEmail(user, verifyToken);
+      } catch (err) {
+        logger.warn('Welcome/Verification email send skipped:', err.message);
+      }
+    });
+
+    logger.info('User registered successfully', { userId: user._id, orgId: organization._id });
 
     return {
       user: user.toJSON(),
@@ -108,7 +128,6 @@ export class AuthService {
     import('mongoose');
     const mongoose = (await import('mongoose')).default;
     
-    // Offline / Demo fallback when MongoDB is not connected
     if (mongoose.connection.readyState !== 1) {
       if (email.toLowerCase() === 'demo@followupos.com' || !email.includes('@')) {
         const demoUserId = '660000000000000000000001';
@@ -129,9 +148,9 @@ export class AuthService {
             slug: 'brightweb-demo',
             industry: 'digital_agency',
             isDemo: true,
-            currency: 'USD',
+            currency: 'INR',
             timezone: 'Asia/Kolkata',
-            subscription: { plan: 'growth', status: 'active' },
+            plan: 'growth',
             onboardingCompleted: true,
           },
           accessToken,
@@ -140,7 +159,6 @@ export class AuthService {
       }
     }
 
-    // Find user with password
     const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
     if (!user) {
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
@@ -150,13 +168,11 @@ export class AuthService {
       throw new AppError('Account deactivated. Contact your administrator.', 403, 'ACCOUNT_DEACTIVATED');
     }
 
-    // Verify password
     const isValid = await user.comparePassword(password);
     if (!isValid) {
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }
 
-    // Generate new tokens
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
     
     user.refreshToken = refreshToken;
@@ -173,6 +189,79 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  async forgotPassword(email) {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return { success: true, message: 'If an account exists, a password reset link has been sent.' };
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.passwordResetToken = resetToken;
+    user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save();
+
+    try {
+      await mailerService.sendPasswordResetEmail(user, resetToken);
+    } catch (err) {
+      logger.warn('Password reset email send failed:', err.message);
+    }
+
+    return { success: true, message: 'If an account exists, a password reset link has been sent.' };
+  }
+
+  async resetPassword({ token, email, newPassword }) {
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+      passwordResetToken: token,
+      passwordResetExpires: { $gt: new Date() }
+    }).select('+passwordResetToken +passwordResetExpires');
+
+    if (!user) {
+      throw new AppError('Invalid or expired password reset token', 400, 'INVALID_RESET_TOKEN');
+    }
+
+    user.passwordHash = await User.hashPassword(newPassword);
+    user.passwordResetToken = null;
+    user.passwordResetExpires = null;
+    user.refreshToken = null; // Invalidate sessions
+    await user.save();
+
+    return { success: true, message: 'Password has been reset successfully. Please login.' };
+  }
+
+  async verifyEmail({ token, email }) {
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: new Date() }
+    }).select('+emailVerificationToken +emailVerificationExpires');
+
+    if (!user) {
+      throw new AppError('Invalid or expired verification link', 400, 'INVALID_VERIFICATION_TOKEN');
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+    await user.save();
+
+    return { success: true, message: 'Email verified successfully.' };
+  }
+
+  async resendVerification(userId) {
+    const user = await User.findById(userId);
+    if (!user) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+    if (user.isEmailVerified) return { success: true, message: 'Email is already verified.' };
+
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    user.emailVerificationToken = verifyToken;
+    user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save();
+
+    await mailerService.sendVerificationEmail(user, verifyToken);
+    return { success: true, message: 'Verification email resent.' };
   }
 
   async refreshAccessToken(refreshToken) {
@@ -216,7 +305,7 @@ export class AuthService {
     if (!isValid) throw new AppError('Current password is incorrect', 400, 'WRONG_PASSWORD');
 
     user.passwordHash = await User.hashPassword(newPassword);
-    user.refreshToken = null; // Invalidate all sessions
+    user.refreshToken = null;
     await user.save();
 
     logger.info('Password changed', { userId });

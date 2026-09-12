@@ -7,7 +7,6 @@ export async function authenticate(req, res, next) {
   try {
     let token;
 
-    // Check Authorization header first
     if (req.headers.authorization?.startsWith('Bearer ')) {
       token = req.headers.authorization.split(' ')[1];
     }
@@ -16,7 +15,6 @@ export async function authenticate(req, res, next) {
       return next(new AppError('Authentication required', 401, 'UNAUTHORIZED'));
     }
 
-    // Verify access token
     let decoded;
     try {
       decoded = jwt.verify(token, config.jwt.accessSecret);
@@ -27,7 +25,6 @@ export async function authenticate(req, res, next) {
       return next(new AppError('Invalid token', 401, 'INVALID_TOKEN'));
     }
 
-    // Load user (with offline demo fallback)
     import('mongoose');
     const mongoose = (await import('mongoose')).default;
     let user;
@@ -43,6 +40,7 @@ export async function authenticate(req, res, next) {
         name: 'Arjun Kapoor',
         email: 'demo@followupos.com',
         role: 'owner',
+        platformRole: 'super_admin',
         isActive: true,
         organizationId: '660000000000000000000002',
       };
@@ -70,6 +68,14 @@ export function authorize(...roles) {
   };
 }
 
+export const requireAuth = authenticate;
+export const requireOrg = (req, res, next) => {
+  if (!req.organizationId) {
+    return next(new AppError('Organization context required', 401, 'ORG_REQUIRED'));
+  }
+  next();
+};
+
 export function generateTokens(userId) {
   const accessToken = jwt.sign(
     { userId, type: 'access' },
@@ -89,3 +95,12 @@ export function generateTokens(userId) {
 export function verifyRefreshToken(token) {
   return jwt.verify(token, config.jwt.refreshSecret);
 }
+
+export default {
+  authenticate,
+  authorize,
+  requireAuth,
+  requireOrg,
+  generateTokens,
+  verifyRefreshToken
+};

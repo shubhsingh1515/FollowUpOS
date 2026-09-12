@@ -18,16 +18,24 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const deal = await Deal.create({ ...req.body, organizationId: req.organizationId, ownerId: req.user._id });
-  
-  await Activity.create({
+  const name = req.body.name || req.body.title || 'Sales Opportunity';
+  const deal = await Deal.create({
+    ...req.body,
+    name,
     organizationId: req.organizationId,
-    leadId: deal.leadId,
-    userId: req.user._id,
-    type: 'deal_created',
-    title: `Deal created: ${deal.name}`,
-    metadata: { dealId: deal._id, value: deal.value },
+    ownerId: req.user._id,
   });
+  
+  if (deal.leadId) {
+    await Activity.create({
+      organizationId: req.organizationId,
+      leadId: deal.leadId,
+      userId: req.user._id,
+      type: 'deal_created',
+      title: `Deal created: ${deal.name}`,
+      metadata: { dealId: deal._id, value: deal.value },
+    });
+  }
 
   res.status(201).json({ success: true, data: { deal } });
 });
@@ -44,29 +52,33 @@ router.patch('/:id', async (req, res) => {
   if (req.body.stage === 'won' && !deal.wonAt) {
     deal.wonAt = new Date();
     await deal.save();
-    await Lead.findByIdAndUpdate(deal.leadId, { status: 'won', stage: 'won' });
-    await Activity.create({
-      organizationId: req.organizationId,
-      leadId: deal.leadId,
-      userId: req.user._id,
-      type: 'deal_won',
-      title: `Deal won: ${deal.name} — ₹${deal.value?.toLocaleString()}`,
-      metadata: { dealId: deal._id, value: deal.value },
-    });
+    if (deal.leadId) {
+      await Lead.findByIdAndUpdate(deal.leadId, { status: 'won', stage: 'won' });
+      await Activity.create({
+        organizationId: req.organizationId,
+        leadId: deal.leadId,
+        userId: req.user._id,
+        type: 'deal_won',
+        title: `Deal won: ${deal.name} — ₹${deal.value?.toLocaleString()}`,
+        metadata: { dealId: deal._id, value: deal.value },
+      });
+    }
   }
 
   if (req.body.stage === 'lost') {
     deal.lostAt = new Date();
     await deal.save();
-    await Lead.findByIdAndUpdate(deal.leadId, { status: 'lost', stage: 'lost' });
-    await Activity.create({
-      organizationId: req.organizationId,
-      leadId: deal.leadId,
-      userId: req.user._id,
-      type: 'deal_lost',
-      title: `Deal lost: ${deal.name}`,
-      metadata: { dealId: deal._id, reason: req.body.lostReason },
-    });
+    if (deal.leadId) {
+      await Lead.findByIdAndUpdate(deal.leadId, { status: 'lost', stage: 'lost' });
+      await Activity.create({
+        organizationId: req.organizationId,
+        leadId: deal.leadId,
+        userId: req.user._id,
+        type: 'deal_lost',
+        title: `Deal lost: ${deal.name}`,
+        metadata: { dealId: deal._id, reason: req.body.lostReason },
+      });
+    }
   }
 
   res.json({ success: true, data: { deal } });

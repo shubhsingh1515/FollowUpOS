@@ -20,10 +20,25 @@ import {
   TodayPage,
   CopilotPage,
   AnalyticsPage,
+  OnboardingPage,
   ServicesPage,
   HowItWorksPage,
   PricingPage,
   IntegrationsShowcasePage,
+  PrivacyPage,
+  TermsPage,
+  CookiesPage,
+  RefundPolicyPage,
+  SupportPage,
+  AdminLayout,
+  AdminDashboardPage,
+  AdminOrganizationsPage,
+  AdminSubscriptionsPage,
+  AdminUsagePage,
+  AdminSupportPage,
+  AdminFeatureFlagsPage,
+  AdminSystemHealthPage,
+  AdminAuditLogsPage,
 } from '@/pages'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -41,7 +56,7 @@ function PublicAuthRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to="/today" replace />
   }
 
   return <>{children}</>
@@ -56,6 +71,11 @@ export default function App() {
       <Route path="/how-it-works" element={<HowItWorksPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/integrations-showcase" element={<IntegrationsShowcasePage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/cookies" element={<CookiesPage />} />
+      <Route path="/refund-policy" element={<RefundPolicyPage />} />
+      <Route path="/support" element={<SupportPage />} />
 
       {/* Auth Routes */}
       <Route
@@ -204,6 +224,26 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute>
+            <OnboardingPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Super Admin Area */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboardPage />} />
+        <Route path="organizations" element={<AdminOrganizationsPage />} />
+        <Route path="subscriptions" element={<AdminSubscriptionsPage />} />
+        <Route path="usage" element={<AdminUsagePage />} />
+        <Route path="support" element={<AdminSupportPage />} />
+        <Route path="feature-flags" element={<AdminFeatureFlagsPage />} />
+        <Route path="system-health" element={<AdminSystemHealthPage />} />
+        <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+      </Route>
 
       {/* Catch-all redirect */}
       <Route path="*" element={<Navigate to="/" replace />} />

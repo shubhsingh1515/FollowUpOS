@@ -31,7 +31,7 @@ const contactSchema = new mongoose.Schema({
   },
   source: {
     type: String,
-    enum: ['website', 'whatsapp', 'instagram', 'facebook', 'linkedin', 'email', 'google_forms', 'calendly', 'manual', 'csv', 'other'],
+    enum: ['website', 'website_form', 'whatsapp', 'instagram', 'facebook', 'meta_lead_ads', 'linkedin', 'email', 'google_forms', 'calendly', 'inbound_webhook', 'api', 'manual', 'csv', 'other'],
     default: 'manual',
   },
   notes: String,

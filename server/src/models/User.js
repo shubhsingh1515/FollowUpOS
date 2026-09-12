@@ -15,6 +15,11 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
   },
+  phone: {
+    type: String,
+    trim: true,
+    default: null,
+  },
   passwordHash: {
     type: String,
     required: true,
@@ -29,6 +34,12 @@ const userSchema = new mongoose.Schema({
     enum: ['owner', 'admin', 'manager', 'sales_rep', 'viewer'],
     default: 'owner',
   },
+  platformRole: {
+    type: String,
+    enum: ['none', 'super_admin', 'support_admin', 'billing_admin'],
+    default: 'none',
+    index: true,
+  },
   organizationId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Organization',
@@ -39,7 +50,18 @@ const userSchema = new mongoose.Schema({
     select: false,
     default: null,
   },
-  lastLoginAt: Date,
+  isEmailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  emailVerificationToken: {
+    type: String,
+    select: false,
+  },
+  emailVerificationExpires: {
+    type: Date,
+    select: false,
+  },
   passwordResetToken: {
     type: String,
     select: false,
@@ -48,6 +70,7 @@ const userSchema = new mongoose.Schema({
     type: Date,
     select: false,
   },
+  lastLoginAt: Date,
   isActive: {
     type: Boolean,
     default: true,
@@ -60,13 +83,14 @@ const userSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Never return sensitive fields
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.passwordHash;
   delete obj.refreshToken;
   delete obj.passwordResetToken;
   delete obj.passwordResetExpires;
+  delete obj.emailVerificationToken;
+  delete obj.emailVerificationExpires;
   delete obj.__v;
   return obj;
 };

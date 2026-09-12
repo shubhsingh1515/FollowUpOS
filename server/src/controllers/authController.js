@@ -5,7 +5,7 @@ import { config } from '../config/config.js';
 
 export const authController = {
   async register(req, res) {
-    const { name, email, password, companyName, industry } = req.body;
+    const { name, email, password, companyName, industry, phone } = req.body;
 
     if (mongoose.connection.readyState !== 1) {
       const mockUser = {
@@ -13,6 +13,7 @@ export const authController = {
         name: name || 'Demo User',
         email: email || 'demo@followupos.com',
         role: 'owner',
+        isEmailVerified: true
       };
       const mockOrg = {
         _id: `org-${Date.now()}`,
@@ -37,14 +38,13 @@ export const authController = {
       });
     }
 
-    const result = await authService.register({ name, email, password, companyName, industry });
+    const result = await authService.register({ name, email, password, companyName, industry, phone });
 
-    // Set refresh token in httpOnly cookie
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.status(201).json({
@@ -121,6 +121,7 @@ export const authController = {
             name: req.user?.name || 'Arjun Kapoor',
             email: req.user?.email || 'demo@followupos.com',
             role: 'owner',
+            platformRole: 'super_admin'
           },
           organization: {
             _id: req.organizationId || '660000000000000000000002',
@@ -137,6 +138,29 @@ export const authController = {
       success: true,
       data: { user, organization },
     });
+  },
+
+  async forgotPassword(req, res) {
+    const { email } = req.body;
+    const result = await authService.forgotPassword(email);
+    res.json(result);
+  },
+
+  async resetPassword(req, res) {
+    const { token, email, newPassword } = req.body;
+    const result = await authService.resetPassword({ token, email, newPassword });
+    res.json(result);
+  },
+
+  async verifyEmail(req, res) {
+    const { token, email } = req.body;
+    const result = await authService.verifyEmail({ token, email });
+    res.json(result);
+  },
+
+  async resendVerification(req, res) {
+    const result = await authService.resendVerification(req.user._id);
+    res.json(result);
   },
 
   async changePassword(req, res) {

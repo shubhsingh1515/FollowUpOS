@@ -10,7 +10,6 @@ const dealSchema = new mongoose.Schema({
   leadId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Lead',
-    required: true,
   },
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,

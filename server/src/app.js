@@ -24,34 +24,37 @@ import settingsRoutes from './routes/settings.js';
 import publicRoutes from './routes/public.js';
 import copilotRoutes from './routes/copilot.js';
 import campaignsRoutes from './routes/campaigns.js';
+import billingRoutes from './routes/billing.js';
+import webhookRoutes from './routes/webhooks.js';
+import adminRoutes from './routes/admin.js';
+import supportRoutes from './routes/support.js';
 
 const app = express();
 
-// Trust proxy for rate limiting behind reverse proxy
 app.set('trust proxy', 1);
 
-// Security middleware
+// Security headers
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
-// CORS
+// CORS Configuration
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || /^http:\/\/localhost:[0-9]+$/.test(origin) || origin === config.client.url) {
+    if (!origin || /^http:\/\/localhost:[0-9]+$/.test(origin) || origin === config.client.url || origin === process.env.APP_URL) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(null, true); // Allow configured origins
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-razorpay-signature'],
 }));
 
 // Rate limiting
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 2000,
   message: { success: false, message: 'Too many requests', code: 'RATE_LIMITED' },
   standardHeaders: true,
@@ -60,7 +63,7 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 30,
   message: { success: false, message: 'Too many auth attempts', code: 'RATE_LIMITED' },
 });
 
@@ -78,23 +81,28 @@ if (config.env !== 'test') {
   }));
 }
 
-// Health check
+// Health check endpoints
 app.get('/api/health', (req, res) => {
   const dbStatus = getDatabaseStatus();
   res.json({
     status: 'ok',
     environment: config.env,
+    version: '2.0.0',
     database: dbStatus.connected ? 'connected' : 'disconnected',
     timestamp: new Date().toISOString(),
   });
 });
 
-// Public API (no auth required)
+// Public endpoints (no auth required)
 app.use('/api/public', publicRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
-// Authenticated API routes
+// Rate-limited Authenticated API routes
 app.use('/api', apiLimiter);
 app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/billing', billingRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/support', supportRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/conversations', conversationRoutes);

@@ -1,4 +1,5 @@
 import { Lead } from '../models/Lead.js';
+import { Organization } from '../models/Organization.js';
 import { Contact } from '../models/Contact.js';
 import { Conversation } from '../models/Conversation.js';
 import { Message } from '../models/Message.js';
@@ -136,20 +137,22 @@ export class LeadService {
       if (!contact) throw new AppError('Contact not found', 404, 'CONTACT_NOT_FOUND');
     } else {
       // Find or create contact
+      const contactOrConditions = [];
+      if (email) contactOrConditions.push({ email: email.toLowerCase() });
+      if (phone) contactOrConditions.push({ phone });
+
+      const contactQuery = contactOrConditions.length > 0
+        ? { organizationId, $or: contactOrConditions }
+        : { organizationId, email: `inbound_${Date.now()}@example.com` };
+
       contact = await Contact.findOneAndUpdate(
-        {
-          organizationId,
-          $or: [
-            email ? { email: email.toLowerCase() } : null,
-            phone ? { phone } : null,
-          ].filter(Boolean).reduce((acc, c) => ({ ...acc, ...c }), {}),
-        },
+        contactQuery,
         {
           $setOnInsert: {
             organizationId,
             firstName,
             lastName,
-            fullName: [firstName, lastName].filter(Boolean).join(' '),
+            fullName: [firstName, lastName].filter(Boolean).join(' ') || 'Inbound Prospect',
             email: email?.toLowerCase(),
             phone,
             company,
@@ -296,10 +299,11 @@ export class LeadService {
     }
 
     const ai = getAIProvider();
+    const orgDoc = organization && organization.name ? organization : await Organization.findById(organizationId);
     
     const analysisInput = {
-      org: organization,
-      services: organization.services || [],
+      org: orgDoc,
+      services: orgDoc?.services || [],
       messages,
       leadInfo: {
         name: lead.contactId?.fullName,
@@ -329,7 +333,7 @@ export class LeadService {
         insights: [],
         recommendedAction: 'Review lead manually.',
         nextFollowUpHours: 24,
-        budget: { currency: organization.currency || 'INR' },
+        budget: { currency: orgDoc?.currency || 'INR' },
       };
     }
 

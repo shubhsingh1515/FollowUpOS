@@ -19,7 +19,7 @@ const conversationSchema = new mongoose.Schema({
   },
   channel: {
     type: String,
-    enum: ['website', 'whatsapp', 'instagram', 'facebook', 'linkedin', 'email', 'google_forms', 'calendly', 'manual'],
+    enum: ['website', 'website_form', 'whatsapp', 'instagram', 'facebook', 'meta_lead_ads', 'linkedin', 'email', 'google_forms', 'calendly', 'inbound_webhook', 'api', 'manual', 'other'],
     default: 'manual',
   },
   subject: String,

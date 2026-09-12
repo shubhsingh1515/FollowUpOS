@@ -22,7 +22,6 @@ const leadSchema = new mongoose.Schema({
 
   source: {
     type: String,
-    enum: ['website', 'whatsapp', 'instagram', 'facebook', 'linkedin', 'email', 'google_forms', 'calendly', 'manual', 'csv', 'other'],
     default: 'manual',
     index: true,
   },
@@ -33,13 +32,13 @@ const leadSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won', 'lost'],
+    enum: ['new', 'contacted', 'qualified', 'meeting_scheduled', 'proposal', 'negotiation', 'won', 'lost', 'closed'],
     default: 'new',
     index: true,
   },
   stage: {
     type: String,
-    enum: ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won', 'lost'],
+    enum: ['new', 'contacted', 'qualified', 'meeting_scheduled', 'proposal', 'negotiation', 'won', 'lost', 'closed'],
     default: 'new',
   },
 
@@ -53,52 +52,52 @@ const leadSchema = new mongoose.Schema({
 
   intent: {
     type: String,
-    enum: ['purchase', 'inquiry', 'research', 'comparison', 'support', 'unknown'],
     default: 'unknown',
   },
   intentConfidence: { type: Number, min: 0, max: 1, default: 0 },
 
-  estimatedValue: { type: Number, default: 0 },
-  currency: { type: String, default: 'INR' },
-
-  industry: String,
-  companySize: String,
-  budget: {
-    min: Number,
-    max: Number,
-    currency: { type: String, default: 'INR' },
+  urgency: {
+    type: String,
+    enum: ['urgent', 'medium', 'low'],
+    default: 'medium',
   },
+
+  budget: {
+    amount: Number,
+    currency: { type: String, default: 'INR' },
+    period: String,
+  },
+
   timeline: String,
-  service: String,
-
-  aiSummary: String,
-  aiInsights: [String],
-  aiRecommendations: [String],
+  summary: String,
   recommendedAction: String,
+  suggestedReply: String,
 
-  lastContactAt: Date,
-  lastInboundAt: Date,
-  lastOutboundAt: Date,
+  aiScoreExplanation: [String],
+  keyBuyingSignals: [String],
+  riskFactors: [String],
 
-  nextFollowUpAt: { type: Date, index: true },
+  scoreHistory: [{
+    score: Number,
+    temperature: String,
+    reason: String,
+    changedAt: { type: Date, default: Date.now },
+  }],
+
+  lastScoredAt: Date,
+  lastContactedAt: Date,
+  nextFollowUpAt: Date,
   followUpCount: { type: Number, default: 0 },
 
-  isQualified: { type: Boolean, default: false },
-  isArchived: { type: Boolean, default: false, index: true },
-
-  tags: [{ type: String, trim: true }],
-  notes: String,
-
-  lastAnalyzedAt: Date,
+  isArchived: { type: Boolean, default: false },
+  tags: [String],
 }, {
   timestamps: true,
 });
 
-// Compound indexes for common queries
-leadSchema.index({ organizationId: 1, status: 1, createdAt: -1 });
+leadSchema.index({ organizationId: 1, status: 1 });
 leadSchema.index({ organizationId: 1, leadScore: -1 });
-leadSchema.index({ organizationId: 1, nextFollowUpAt: 1, isArchived: 1 });
-leadSchema.index({ organizationId: 1, ownerId: 1, status: 1 });
+leadSchema.index({ organizationId: 1, createdAt: -1 });
 
 export const Lead = mongoose.model('Lead', leadSchema);
 export default Lead;

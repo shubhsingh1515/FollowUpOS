@@ -12,7 +12,7 @@ const businessHoursSchema = new mongoose.Schema({
 
 const settingsSchema = new mongoose.Schema({
   defaultLeadScore: { type: Number, default: 50 },
-  defaultFollowUpDelay: { type: Number, default: 24 }, // hours
+  defaultFollowUpDelay: { type: Number, default: 24 },
   businessHours: [businessHoursSchema],
   aiEnabled: { type: Boolean, default: true },
   autoReplyEnabled: { type: Boolean, default: false },
@@ -28,13 +28,23 @@ const settingsSchema = new mongoose.Schema({
     enum: ['english', 'hindi', 'hinglish', 'auto'],
     default: 'english',
   },
+  subscriptionStatus: {
+    type: String,
+    default: 'trialing'
+  },
+  apiKey: {
+    type: String
+  },
+  webhookToken: {
+    type: String
+  }
 }, { _id: false });
 
 const subscriptionSchema = new mongoose.Schema({
   plan: {
     type: String,
     enum: ['starter', 'growth', 'agency', 'trial'],
-    default: 'trial',
+    default: 'growth',
   },
   status: {
     type: String,
@@ -46,8 +56,8 @@ const subscriptionSchema = new mongoose.Schema({
   currentPeriodEnd: Date,
   trialEndsAt: Date,
   limits: {
-    leads: { type: Number, default: 50 }, // per month for trial
-    users: { type: Number, default: 1 },
+    leads: { type: Number, default: 1000 },
+    users: { type: Number, default: 5 },
   },
 }, { _id: false });
 
@@ -65,12 +75,13 @@ const organizationSchema = new mongoose.Schema({
   },
   industry: {
     type: String,
-    enum: [
-      'digital_agency', 'web_development', 'marketing_agency',
-      'immigration_consulting', 'real_estate', 'recruitment',
-      'education_consulting', 'solar_energy', 'interior_design', 'other',
-    ],
     default: 'other',
+    trim: true
+  },
+  plan: {
+    type: String,
+    enum: ['starter', 'growth', 'agency', 'trial'],
+    default: 'growth'
   },
   description: String,
   services: [String],
@@ -82,7 +93,7 @@ const organizationSchema = new mongoose.Schema({
   currency: { type: String, default: 'INR' },
   location: String,
   averageDealValue: Number,
-  salesCycleLength: String, // e.g., "2 weeks"
+  salesCycleLength: String,
   teamSize: Number,
   targetCustomers: String,
   settings: {
@@ -109,7 +120,6 @@ organizationSchema.pre('save', function (next) {
       '-' + Date.now().toString(36);
   }
   
-  // Default business hours
   if (!this.settings.businessHours || this.settings.businessHours.length === 0) {
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     this.settings.businessHours = days.map((day) => ({

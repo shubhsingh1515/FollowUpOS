@@ -52,4 +52,11 @@ export function getDatabaseStatus() {
   };
 }
 
+export async function disconnectDatabase() {
+  try {
+    await mongoose.disconnect();
+    isConnected = false;
+  } catch {}
+}
+
 export default connectDatabase;
