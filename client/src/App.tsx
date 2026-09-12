@@ -20,6 +20,10 @@ import {
   TodayPage,
   CopilotPage,
   AnalyticsPage,
+  ServicesPage,
+  HowItWorksPage,
+  PricingPage,
+  IntegrationsShowcasePage,
 } from '@/pages'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -46,8 +50,12 @@ function PublicAuthRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Routes>
-      {/* Public Marketing Landing Page */}
+      {/* Public Marketing Landing & Feature Pages */}
       <Route path="/" element={<LandingPage />} />
+      <Route path="/services" element={<ServicesPage />} />
+      <Route path="/how-it-works" element={<HowItWorksPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/integrations-showcase" element={<IntegrationsShowcasePage />} />
 
       {/* Auth Routes */}
       <Route

@@ -1,628 +1,405 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import {
-  Sparkles, Zap, MessageSquare, ArrowRight, CheckCircle2,
-  TrendingUp, Shield, BarChart3, Clock, Users, Flame, Star,
-  ChevronRight, Play, Check, HelpCircle, Bot, Building2,
-  Lock, Globe, Phone, FileText, ChevronDown, Award
+  Sparkles, ArrowRight, CheckCircle2, ShieldCheck, Zap,
+  MessageSquare, Clock, Calendar, DollarSign, Bot, Flame,
+  Check, ChevronDown, Building2, HelpCircle, Layers,
+  ChevronRight, Play, Pause, RotateCcw, AlertTriangle,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useAuthStore } from '@/store/authStore'
+import { Button } from '@/components/ui/button'
+import MarketingNavbar from '@/components/marketing/MarketingNavbar'
+import MarketingFooter from '@/components/marketing/MarketingFooter'
+import HeroSimulation from '@/components/marketing/HeroSimulation'
+import ExecutionLoopSection from '@/components/marketing/ExecutionLoopSection'
+import TodayCockpitSection from '@/components/marketing/TodayCockpitSection'
+import CopilotInteractiveSection from '@/components/marketing/CopilotInteractiveSection'
+import { cn, formatCurrency } from '@/lib/utils'
+import { gsap, ScrollTrigger, prefersReducedMotion } from '@/lib/gsap'
 
 export default function LandingPage() {
-  const { isAuthenticated } = useAuthStore()
-  const navigate = useNavigate()
+  const [openFaq, setOpenFaq] = useState<number | null>(0)
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly')
+  const heroRef = useRef<HTMLDivElement>(null)
 
-  // Interactive Miniature Hero Simulation state
-  const [simStep, setSimStep] = useState<number>(0)
-  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>('monthly')
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
-
-  const simulationSteps = [
+  const faqItems = [
     {
-      badge: '01. Inbound Lead Arrives',
-      title: 'WhatsApp Message Received at 11:42 PM',
-      leadName: 'Sarah Jenkins',
-      leadCompany: 'Acme Digital Agency',
-      channel: 'WhatsApp',
-      content: '"Hi! We are losing leads on our website and need automated WhatsApp follow-ups. Budget is ₹2.5L. Can we get started this month?"',
-      actionTitle: 'AI Ingestion Engine',
-      actionDetail: 'Lead captured, verified, and parsed in 1.2 seconds without manual entry.',
+      q: 'How does FollowUpOS prevent robotic or embarrassing automated messages?',
+      a: 'FollowUpOS follows a strict human-in-the-loop design. For high-ticket conversations, AI prepares personalized consultative drafts with relevant objection rebuttals and booking links, allowing the sales rep to approve, edit, or dispatch in one click. Automated drips also pause immediately the second a lead replies.',
     },
     {
-      badge: '02. AI Intent & Urgency Analysis',
-      title: 'Score Calculated: 92 / 100 (Hot)',
-      leadName: 'Sarah Jenkins',
-      leadCompany: 'Acme Digital Agency',
-      channel: 'WhatsApp',
-      content: 'Intent: High Purchase Intent • Budget: ₹2,00,000 – ₹3,00,000 • Timeline: This Month (Urgent) • Decision Maker: Direct Founder',
-      actionTitle: 'Recommendation Engine',
-      actionDetail: 'AI recommends immediate response with discovery meeting booking link.',
+      q: 'How fast does FollowUpOS ingest leads from Meta Ads and WhatsApp?',
+      a: 'Inbound leads from Meta Lead Ads, WhatsApp Business API, and website widgets are captured in under 3 seconds via high-throughput webhooks, scored instantly, and routed to the salesperson morning queue.',
     },
     {
-      badge: '03. Autonomous Follow-up Dispatched',
-      title: 'WhatsApp Reply Sent in 85 Seconds',
-      leadName: 'Sarah Jenkins',
-      leadCompany: 'Acme Digital Agency',
-      channel: 'WhatsApp',
-      content: '"Hi Sarah! Thanks for reaching out to FollowUpOS. We specialize in automated WhatsApp follow-up workflows for digital agencies. Are you free for a 15-min discovery call tomorrow at 11:30 AM?"',
-      actionTitle: 'Smart Cadence Scheduled',
-      actionDetail: 'Day 2 & Day 4 follow-ups scheduled (will auto-pause the moment Sarah replies).',
+      q: 'What happens when a lead replies to an ongoing automated follow-up sequence?',
+      a: 'The sequence auto-pauses instantly across all channels (WhatsApp, Email, SMS). FollowUpOS logs the response, notifies the assigned sales representative, and moves the deal into the active conversation queue so no duplicate or awkward automated messages ever go out.',
     },
     {
-      badge: '04. Meeting Booked & Deal Won',
-      title: 'Calendar Discovery Confirmed • ₹2,50,000 Deal Won',
-      leadName: 'Sarah Jenkins',
-      leadCompany: 'Acme Digital Agency',
-      channel: 'WhatsApp',
-      content: '"Sarah accepted Google Meet invitation for tomorrow 11:30 AM. Deal moved to Won. Cadence paused automatically."',
-      actionTitle: 'Revenue Attributed',
-      actionDetail: '₹2,50,000 added to closed-won revenue in Analytics.',
+      q: 'Can we connect our own WhatsApp number and business email domain?',
+      a: 'Yes. FollowUpOS supports official WhatsApp Cloud API, custom SMTP, Gmail/Google Workspace OAuth2, and Twilio for SMS, ensuring all messages come directly from your verified brand domain and phone number.',
+    },
+    {
+      q: 'Does FollowUpOS support multi-lingual or Hinglish conversations for Indian clients?',
+      a: 'Yes. FollowUpOS understands context in English, Hindi, and natural Hinglish commonly used by Indian businesses, extracting intent and generating professional consultative replies tailored to local sales culture.',
+    },
+    {
+      q: 'Can I try FollowUpOS without connecting live customer data or entering a credit card?',
+      a: 'Yes. You can explore our interactive workspace demo instantly with pre-populated leads, priority queues, and AI copilot queries with zero setup required.',
     },
   ]
 
-  const faqs = [
+  const pricingPlans = [
     {
-      q: 'What is FollowUpOS?',
-      a: 'FollowUpOS is an AI sales execution platform for service businesses. It captures inbound leads across WhatsApp, website forms, Meta Ads, and email, analyzes buyer intent, and follows up autonomously so no deal slips through the cracks.',
+      id: 'starter',
+      name: 'Starter',
+      priceMonthly: 999,
+      priceAnnual: 799,
+      desc: 'For solo operators, consultants, and boutique agencies.',
+      features: [
+        'Up to 500 Leads / month',
+        '1,500 AI Follow-up Touches',
+        'WhatsApp Inbound Webhook & Widget',
+        'Deterministic Lead Intent Scoring',
+        '2 Team Member Seats',
+      ],
+      popular: false,
     },
     {
-      q: 'Who is FollowUpOS built for?',
-      a: 'It is built specifically for service businesses and high-ticket agencies where every lead matters: digital marketing agencies, consultants, real estate teams, educational consultancies, recruitment agencies, and B2B service firms.',
+      id: 'growth',
+      name: 'Growth',
+      priceMonthly: 2999,
+      priceAnnual: 2399,
+      desc: 'For growing service agencies and consultancies needing multi-channel cadences.',
+      features: [
+        'Up to 2,500 Leads / month',
+        '10,000 AI Follow-up Touches',
+        'Official WhatsApp Cloud API + Email + SMS',
+        'Salesperson Morning Briefing (/today)',
+        'Sales Copilot Assistant (/copilot)',
+        'Node Cadence Builder & Auto-Pause',
+        '8-Stage Pipeline with Weighted Forecasts',
+        '10 Team Member Seats',
+      ],
+      popular: true,
     },
     {
-      q: 'Does it work with official WhatsApp?',
-      a: 'Yes. FollowUpOS integrates exclusively with official Meta WhatsApp Business Cloud APIs. We never scrape WhatsApp Web or use unauthorized tools, ensuring 100% account safety.',
-    },
-    {
-      q: 'Can I connect my website forms?',
-      a: 'Yes. You can use our embeddable lead capture widget, copy our 1-click universal webhook into WordPress, Webflow, Zapier, or Make, or connect via Google Forms.',
-    },
-    {
-      q: 'Can AI automatically reply, or can I require approval?',
-      a: 'You have complete control. The default mode is "Approval Required" where sales reps review and approve AI messages with 1 click. You can also enable fully autonomous follow-ups once you feel confident.',
-    },
-    {
-      q: 'Does FollowUpOS replace my CRM?',
-      a: 'FollowUpOS includes a built-in Kanban pipeline, contact memory, and conversation inbox. It acts as an active AI execution layer that does the actual follow-up work traditional passive CRMs leave to salespeople.',
-    },
-    {
-      q: 'Can my whole sales team use it?',
-      a: 'Yes. You can invite team members with role-based permissions (Owner, Admin, Sales Rep), assign leads, track response times, and monitor close rates on the Team Leaderboard.',
-    },
-    {
-      q: 'How does billing work?',
-      a: 'We offer straightforward monthly and annual plans in INR starting at ₹999/month for solo operators up to ₹7,999/month for agencies. You can upgrade, downgrade, or cancel at any time.',
-    },
-    {
-      q: 'Is my data secure and isolated?',
-      a: 'Yes. Every organization has strict multi-tenant data isolation. Your customer conversations and lead data are never shared or used to train third-party public models.',
-    },
-    {
-      q: 'Can I cancel anytime?',
-      a: 'Yes. There are no lock-in contracts or cancellation penalties. If you cancel, your account remains active until the end of your billing cycle.',
+      id: 'agency',
+      name: 'Agency & Scale',
+      priceMonthly: 7999,
+      priceAnnual: 6399,
+      desc: 'For high-ticket service operations, multi-client accounts, and sales teams.',
+      features: [
+        'Up to 10,000 Leads / month',
+        'Unlimited AI Copilot & Lead Scoring',
+        'Multi-Client Workspace Sub-Accounts',
+        'Custom Webhooks & CRM Sync',
+        'Revenue at Risk & Lead Decay Monitor',
+        '25 Team Member Seats',
+        'Dedicated Solutions Architect',
+      ],
+      popular: false,
     },
   ]
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-indigo-500 selection:text-white">
-      {/* 1. NAVBAR */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/85 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-xs">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <span className="font-extrabold text-lg tracking-tight text-foreground">
-              FollowUp<span className="text-indigo-600">OS</span>
-            </span>
-          </Link>
+    <div className="min-h-screen bg-[#07080B] text-zinc-100 selection:bg-indigo-500 selection:text-white font-sans antialiased overflow-x-hidden">
+      {/* Floating Glassmorphic Header */}
+      <MarketingNavbar />
 
-          <nav className="hidden md:flex items-center gap-7 text-xs font-medium text-muted-foreground">
-            <a href="#workflow" className="hover:text-foreground transition-colors">How It Works</a>
-            <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-            <a href="#copilot" className="hover:text-foreground transition-colors">AI Copilot</a>
-            <a href="#integrations" className="hover:text-foreground transition-colors">Integrations</a>
-            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-            <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
-          </nav>
+      {/* CHAPTER 01: CINEMATIC HERO WITH LIVE SIMULATION */}
+      <section ref={heroRef} className="pt-32 pb-20 sm:pt-40 sm:pb-28 relative overflow-hidden">
+        {/* Subtle Background Glows */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-indigo-600/15 via-purple-600/10 to-transparent blur-3xl pointer-events-none rounded-full" />
 
-          <div className="flex items-center gap-3">
-            {isAuthenticated ? (
-              <Button onClick={() => navigate('/today')} className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 px-4">
-                Open Workspace
-                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-              </Button>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="ghost" size="sm" className="text-xs h-9">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link to="/login">
-                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 px-4 shadow-xs">
-                    Start Free
-                    <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* 2. HERO SECTION */}
-      <section className="relative pt-16 pb-20 border-b border-border/40 overflow-hidden bg-radial from-indigo-500/5 via-transparent to-transparent">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-900 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-6">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>AI Sales Execution Platform</span>
-            <span className="w-1 h-1 rounded-full bg-indigo-400" />
-            <span className="text-muted-foreground font-normal">Official WhatsApp API + Omnichannel</span>
-          </div>
-
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-foreground">
-            Turn More Leads Into Customers — <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Automatically.</span>
-          </h1>
-
-          <p className="mt-6 text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            FollowUpOS captures every lead, understands buying intent, follows up at the right time, and helps your team close more deals — without letting promising leads fall through the cracks.
-          </p>
-
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-            <Link to="/login" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 h-12 shadow-sm text-sm">
-                Start Free
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-            <a href="#simulator" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 px-6 text-sm">
-                <Play className="w-3.5 h-3.5 mr-2 text-indigo-600 fill-indigo-600" />
-                See How It Works
-              </Button>
-            </a>
-          </div>
-
-          <div className="mt-5 flex items-center justify-center gap-6 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> No credit card required
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> 14-day free trial
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> 2-minute setup
-            </span>
-          </div>
-        </div>
-
-        {/* 3. HERO MINIATURE LIVE UI WORKFLOW SIMULATOR */}
-        <div id="simulator" className="max-w-4xl mx-auto px-4 mt-14">
-          <div className="rounded-2xl border border-border bg-card shadow-xl overflow-hidden">
-            {/* Window bar */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/40">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-400/80" />
-                <div className="w-3 h-3 rounded-full bg-amber-400/80" />
-                <div className="w-3 h-3 rounded-full bg-green-400/80" />
-                <span className="text-xs font-mono text-muted-foreground ml-2">FollowUpOS Live Execution Simulator</span>
-              </div>
-              <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
-                Step {simStep + 1} of 4
-              </span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 relative z-10">
+          {/* Hero Content Header */}
+          <div className="text-center space-y-6 max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-mono font-semibold shadow-inner">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>AI Sales Execution System</span>
             </div>
 
-            {/* Stepper buttons */}
-            <div className="grid grid-cols-4 border-b border-border bg-muted/20 text-xs font-medium">
-              {simulationSteps.map((step, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSimStep(idx)}
-                  className={`p-3 text-center border-r last:border-r-0 transition-colors ${
-                    simStep === idx
-                      ? 'bg-background text-indigo-600 font-bold border-b-2 border-b-indigo-600'
-                      : 'text-muted-foreground hover:bg-muted/40'
-                  }`}
-                >
-                  <span className="hidden sm:inline">{step.badge.split('.')[0]}.</span> {step.badge.split(' ')[1]}
-                </button>
-              ))}
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.08] sm:leading-[1.05]">
+              Turn More Leads Into Customers — <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-indigo-200">Automatically.</span>
+            </h1>
+
+            <p className="text-base sm:text-lg text-zinc-400 leading-relaxed max-w-2xl mx-auto">
+              FollowUpOS helps sales teams understand every lead, prioritize the right conversations, respond in under 2 minutes, and automatically follow up until the deal moves forward.
+            </p>
+
+            <div className="pt-3 flex flex-wrap items-center justify-center gap-3">
+              <Link to="/register">
+                <Button className="bg-white text-black hover:bg-zinc-200 font-bold text-xs h-11 px-7 rounded-full shadow-xl shadow-white/10 gap-2 transition-all hover:scale-105">
+                  Start Free Trial <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Link to="/how-it-works">
+                <Button variant="outline" className="border border-white/20 bg-white/[0.05] text-white hover:bg-white/[0.12] hover:border-white/30 text-xs h-11 px-6 rounded-full font-semibold transition-all">
+                  See How It Works
+                </Button>
+              </Link>
             </div>
 
-            {/* Simulation card body */}
-            <div className="p-6 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <Badge variant="outline" className="text-xs font-mono text-indigo-600 mb-1">
-                    {simulationSteps[simStep].badge}
-                  </Badge>
-                  <h3 className="text-lg font-bold text-foreground">
-                    {simulationSteps[simStep].title}
-                  </h3>
-                </div>
-                <Badge className="bg-emerald-600 text-white text-xs">
-                  {simulationSteps[simStep].channel}
-                </Badge>
-              </div>
+            <p className="text-[11px] text-zinc-500 font-mono">
+              No credit card required · Zero-setup live interactive workspace
+            </p>
+          </div>
 
-              {/* Message Box */}
-              <div className="p-4 rounded-xl border bg-muted/30 font-mono text-xs leading-relaxed text-foreground">
-                {simulationSteps[simStep].content}
-              </div>
-
-              {/* Action Taken row */}
-              <div className="p-3 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900 flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-bold text-indigo-700 dark:text-indigo-300">
-                    {simulationSteps[simStep].actionTitle}:
-                  </span>{' '}
-                  <span className="text-muted-foreground">
-                    {simulationSteps[simStep].actionDetail}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setSimStep((prev) => (prev + 1) % simulationSteps.length)}
-                  className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 shrink-0 ml-3 flex items-center gap-1"
-                >
-                  Next Step <ChevronRight className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
+          {/* Master Live Product Simulation */}
+          <div className="max-w-5xl mx-auto pt-4">
+            <HeroSimulation />
           </div>
         </div>
       </section>
 
-      {/* 4. PRODUCT WORKFLOW STRIP */}
-      <div className="border-b border-border/50 py-6 bg-muted/20">
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs font-semibold text-muted-foreground">
-          <span className="text-foreground">Lead Received</span>
-          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
-          <span className="text-foreground">AI Understands</span>
-          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
-          <span className="text-foreground">Lead Scored</span>
-          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
-          <span className="text-foreground">Reply Suggested</span>
-          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
-          <span className="text-foreground">Follow-up Scheduled</span>
-          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
-          <span className="text-foreground">Meeting Booked</span>
-          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
-          <span className="text-indigo-600 font-bold">Deal Won 🏆</span>
-        </div>
-      </div>
-
-      {/* 5. CATEGORY & TRUST BAR */}
-      <section className="py-10 border-b border-border/40 text-center">
-        <div className="max-w-5xl mx-auto px-4">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-5">
-            Built for service businesses where every inbound lead matters
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-sm font-semibold text-foreground/80">
-            <span>Digital Agencies</span>
-            <span>•</span>
-            <span>Consultancies</span>
-            <span>•</span>
-            <span>Real Estate Teams</span>
-            <span>•</span>
-            <span>Immigration & Education</span>
-            <span>•</span>
-            <span>Recruitment Firms</span>
-            <span>•</span>
-            <span>B2B Services</span>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. PROBLEM SECTION */}
-      <section className="py-20 border-b border-border/40 bg-muted/20">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              Your problem isn't lead generation. It's what happens after the lead arrives.
+      {/* CHAPTER 02: THE PROBLEM STATEMENT */}
+      <section className="py-24 relative bg-[#090B0F] border-t border-b border-white/[0.06]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="max-w-3xl space-y-3">
+            <Badge variant="outline" className="bg-rose-500/10 text-rose-400 border-rose-500/30 text-xs font-mono font-semibold uppercase tracking-wider">
+              The Real Problem
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
+              Your problem isn't lead generation.<br />
+              <span className="text-zinc-500">It's what happens after the lead arrives.</span>
             </h2>
-            <p className="text-muted-foreground text-sm sm:text-base mt-3">
-              Businesses lose up to 68% of inbound revenue not from lack of inquiries, but from slow response times and forgotten follow-ups.
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              { title: 'Leads arrive while your team is busy', desc: 'Prospective clients inquiry at night or during meetings, and go cold before anyone responds.' },
-              { title: 'Sales reps forget follow-ups', desc: 'Prospects say "call me next Tuesday" or "send details", and conversations disappear into chat history.' },
-              { title: 'Hot prospects go cold', desc: 'Without consistent multi-touch follow-ups, ready buyers sign with the competitor who replied first.' },
-              { title: 'Conversations scattered across channels', desc: 'Inquiries sit across WhatsApp, email, Instagram DMs, and form spreadsheets with zero visibility.' },
-            ].map((p, idx) => (
-              <div key={idx} className="p-5 rounded-xl border bg-card space-y-1.5">
-                <div className="text-sm font-bold text-foreground flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-rose-500" />
-                  {p.title}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+            {/* Without FollowUpOS */}
+            <div className="p-8 rounded-3xl border border-rose-500/30 bg-rose-950/15 space-y-6 flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-xs font-mono text-rose-400 font-bold">
+                  <span>WITHOUT FOLLOWUPOS</span>
+                  <AlertTriangle className="w-4 h-4" />
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
+                <h3 className="text-xl font-bold text-white">
+                  The Broken Manual Follow-up Trap
+                </h3>
+                <ul className="space-y-3 text-xs text-rose-200/90 leading-relaxed">
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-rose-400 font-bold">✕</span>
+                    <span><strong>Delayed Replies:</strong> Reps take 4+ hours to contact inbound WhatsApp & Ad leads.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-rose-400 font-bold">✕</span>
+                    <span><strong>Forgotten Opportunities:</strong> 68% of sales prospects never receive a 2nd follow-up.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-rose-400 font-bold">✕</span>
+                    <span><strong>Invisible Pipeline Loss:</strong> Stalled proposals quietly go dark without alerts.</span>
+                  </li>
+                </ul>
               </div>
-            ))}
-          </div>
+              <div className="p-3.5 rounded-xl bg-black/40 border border-rose-500/20 text-xs font-mono text-rose-300">
+                Result: ~42% of marketing budget wasted on unclosed leads.
+              </div>
+            </div>
 
-          <div className="mt-10 p-6 rounded-xl border border-indigo-200 dark:border-indigo-900 bg-indigo-50/50 dark:bg-indigo-950/30 text-center">
-            <h3 className="text-base font-bold text-indigo-900 dark:text-indigo-200">
-              FollowUpOS fixes the gap between lead generation and revenue.
-            </h3>
-            <p className="text-xs text-muted-foreground mt-1 max-w-2xl mx-auto">
-              It doesn't just store your contacts like a passive database. It actively pushes sales conversations forward to booked discovery calls.
-            </p>
+            {/* With FollowUpOS */}
+            <div className="p-8 rounded-3xl border border-emerald-500/30 bg-gradient-to-b from-emerald-950/20 to-black/60 space-y-6 flex flex-col justify-between shadow-2xl">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-xs font-mono text-emerald-400 font-bold">
+                  <span>WITH FOLLOWUPOS</span>
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <h3 className="text-xl font-bold text-white">
+                  High-Velocity Sales Execution
+                </h3>
+                <ul className="space-y-3 text-xs text-zinc-300 leading-relaxed">
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Sub-2-Minute Triage:</strong> Immediate deterministic scoring and personalized WhatsApp drafts.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Smart Multi-Touch Cadences:</strong> Autonomous follow-ups that automatically halt when leads reply.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Morning Priority Cockpit:</strong> Reps wake up to a prioritized list of high-intent deals to close.</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono text-emerald-300">
+                Result: 3.4x higher lead-to-meeting conversion rate.
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 7. WORKFLOW 01 - 06 */}
-      <section id="workflow" className="py-20 border-b border-border/40">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              The 6-Step Sales Execution Engine
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-              From the initial visitor inquiry to closed-won revenue in your bank account.
-            </p>
-          </div>
+      {/* CHAPTER 03: THE EXECUTION LOOP COMPONENT */}
+      <ExecutionLoopSection />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { num: '01', title: 'Capture Omnichannel', desc: 'Ingest leads instantly from WhatsApp, website forms, Meta Lead ads, Instagram, and email into one unified queue.' },
-              { num: '02', title: 'Understand Buyer Intent', desc: 'AI extracts requirements, budget ranges, decision-maker authority, and timeline urgency in seconds.' },
-              { num: '03', title: 'Prioritize Ready Buyers', desc: 'AI scores leads from 0 to 100 and classifies prospects into Hot, Warm, or Cold so reps focus on revenue.' },
-              { num: '04', title: 'Respond in 90 Seconds', desc: 'Generate consultative, personalized responses crafted specifically to address the prospect requirements.' },
-              { num: '05', title: 'Automated Follow-ups', desc: 'Deploy intelligent multi-touch cadences across channels that automatically stop the instant the lead replies.' },
-              { num: '06', title: 'Close & Forecast', desc: 'Track deals through visual Kanban stages with weighted revenue forecasting and source attribution.' },
-            ].map((step, idx) => (
-              <div key={idx} className="p-6 rounded-xl border bg-card space-y-2 relative">
-                <span className="text-2xl font-extrabold text-indigo-600/30 font-mono">{step.num}</span>
-                <h3 className="text-sm font-bold text-foreground">{step.title}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* CHAPTER 04: THE MORNING COCKPIT */}
+      <TodayCockpitSection />
 
-      {/* 8. "AI THAT KNOWS WHAT TO DO NEXT" */}
-      <section className="py-20 border-b border-border/40 bg-muted/20">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              Don't just know which leads are hot. Know what to do next.
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-              FollowUpOS continuously inspects conversation history and tells your sales team the exact next move.
-            </p>
-          </div>
+      {/* CHAPTER 05: SALES COPILOT PLAYGROUND */}
+      <CopilotInteractiveSection />
 
-          {/* AI Recommendation Showcase Panel */}
-          <div className="max-w-2xl mx-auto rounded-xl border border-indigo-200 dark:border-indigo-800 bg-card p-6 shadow-md space-y-4">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-md bg-indigo-600 text-white flex items-center justify-center">
-                  <Bot className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-foreground">AI Sales Recommendation</h3>
-                  <p className="text-[11px] text-muted-foreground">High-intent buyer detected • Priya Sharma (TechStartup India)</p>
-                </div>
-              </div>
-              <Badge variant="destructive" className="text-[10px]">
-                Score: 92/100
+      {/* CHAPTER 06: DEDICATED INDUSTRY SOLUTIONS PREVIEW */}
+      <section className="py-24 relative bg-[#090B0F] border-t border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+            <div className="max-w-2xl space-y-3">
+              <Badge variant="outline" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/30 text-xs font-mono font-semibold uppercase tracking-wider">
+                Industry Specifics
               </Badge>
-            </div>
-
-            <div className="p-3.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 text-xs text-foreground space-y-1.5 border border-indigo-100 dark:border-indigo-900">
-              <div className="font-semibold text-indigo-900 dark:text-indigo-200">
-                Priya is asking about pricing and wants to start this month.
-              </div>
-              <p className="text-muted-foreground text-[11px] leading-relaxed">
-                Key Needs: E-commerce redesign, abandoned cart WhatsApp recovery • Budget: ₹1.2L+ confirmed.
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
+                Built for High-Ticket Service Businesses.
+              </h2>
+              <p className="text-sm sm:text-base text-zinc-400">
+                Tailored playbooks and compliance standards built specifically for service-led growth.
               </p>
             </div>
-
-            <div className="flex items-center justify-between pt-2 border-t text-xs">
-              <span className="text-muted-foreground text-[11px]">
-                Recommended action: <strong className="text-foreground">Reply within 10 mins & offer discovery call</strong>
-              </span>
-              <div className="flex gap-2">
-                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-8">
-                  Generate Reply
-                </Button>
-                <Button size="sm" variant="outline" className="text-xs h-8">
-                  Schedule Call
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 9. COPILOT SHOWCASE */}
-      <section id="copilot" className="py-20 border-b border-border/40">
-        <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          <div className="space-y-4">
-            <Badge variant="outline" className="text-xs text-indigo-600 border-indigo-500/30">
-              <Bot className="w-3.5 h-3.5 mr-1" /> FollowUpOS Copilot
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-              An AI Sales Assistant that knows your entire pipeline.
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Sales reps and founders can ask natural language questions and receive structured, actionable answers without digging through spreadsheets.
-            </p>
-            <ul className="space-y-2 text-xs text-foreground/90 pt-2">
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600" /> "Which leads should I contact today?"
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600" /> "Show me hot leads that haven't been followed up with."
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600" /> "Draft a persuasive follow-up to this objection."
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600" /> "Show me opportunities likely to close this month."
-              </li>
-            </ul>
+            <Link to="/services">
+              <Button variant="outline" className="border border-white/20 bg-white/[0.05] text-white hover:bg-white/[0.12] hover:border-white/30 text-xs h-9 rounded-full px-4 gap-1.5 shrink-0 transition-all">
+                View All Service Playbooks <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
           </div>
 
-          <div className="rounded-xl border bg-card p-5 shadow-md space-y-3 font-mono text-xs">
-            <div className="flex items-center gap-2 text-muted-foreground border-b pb-2">
-              <Bot className="w-4 h-4 text-indigo-600" />
-              <span>Copilot Query Console</span>
-            </div>
-            <div className="p-2.5 rounded bg-muted/50 text-foreground font-sans text-xs">
-              <span className="text-indigo-600 font-semibold">You:</span> "Show me opportunities likely to close this month."
-            </div>
-            <div className="p-3 rounded bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900 space-y-1.5 font-sans text-xs">
-              <div className="font-bold text-foreground">3 deals have 70%+ close probability:</div>
-              <div className="text-muted-foreground text-[11px] space-y-1">
-                <div>• Beacon Health Partners (₹4,50,000) — Negotiation (85%)</div>
-                <div>• Apex Global Logistics (₹2,40,000) — Proposal (70%)</div>
-                <div>• TechStartup India (₹1,20,000) — Qualified (60%)</div>
-              </div>
-              <div className="pt-1 font-bold text-indigo-600 text-xs">
-                Total weighted revenue forecast: ₹6,22,500
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 10. INTEGRATIONS MARKETPLACE STRIP */}
-      <section id="integrations" className="py-16 border-b border-border/40 bg-muted/20 text-center">
-        <div className="max-w-5xl mx-auto px-4">
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
-            Connects With Your Inbound Lead Channels
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Zero engineering required. Start receiving leads via webhook or native integration in minutes.
-          </p>
-          <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 text-xs">
-            {['Official WhatsApp', 'Website Forms', 'Meta Lead Ads', 'Instagram Direct', 'Calendly', 'Google Forms'].map((c, i) => (
-              <div key={i} className="p-3 rounded-lg border bg-card font-medium text-foreground">
-                {c}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { title: 'Digital Agencies', desc: 'Instant WhatsApp response for Meta ad traffic & price objection handling.', tag: 'Agency ROI' },
+              { title: 'Consultancies', desc: 'Executive proposal check-ins & multi-stakeholder buying committee tracking.', tag: 'Enterprise' },
+              { title: 'Real Estate Brokers', desc: 'Site visit scheduling, budget filtering, and automated weekend appointment sync.', tag: 'High-Ticket' },
+              { title: 'Specialty Clinics', desc: 'Empathetic consultation booking with strict patient privacy compliance.', tag: 'Healthcare' },
+            ].map((card, i) => (
+              <div key={i} className="p-6 rounded-2xl border border-white/[0.08] bg-white/[0.02] space-y-3 hover:border-indigo-500/40 transition-all group flex flex-col justify-between">
+                <div className="space-y-2">
+                  <Badge variant="outline" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/30 text-[10px] font-mono">
+                    {card.tag}
+                  </Badge>
+                  <h3 className="text-base font-bold text-white group-hover:text-indigo-200 transition-colors">{card.title}</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">{card.desc}</p>
+                </div>
+                <Link to="/services" className="text-xs text-indigo-400 font-semibold hover:underline flex items-center gap-1 pt-3 border-t border-white/[0.05]">
+                  Learn more <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* 11. PRICING SECTION */}
-      <section id="pricing" className="py-20 border-b border-border/40">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl font-extrabold tracking-tight">
-              Predictable Pricing Built for Growing Sales Teams
+      {/* CHAPTER 07: TRANSPARENT COMMERCIAL PRICING */}
+      <section className="py-24 relative bg-[#07080B] border-t border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="text-center space-y-3 max-w-2xl mx-auto">
+            <Badge variant="outline" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/30 text-xs font-mono font-semibold uppercase tracking-wider">
+              Commercial Pricing
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
+              Predictable, Transparent Pricing.
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-              Recover just one forgotten deal per month and FollowUpOS pays for itself 10x over.
+            <p className="text-sm text-zinc-400">
+              No hidden fees, no credit card required to start, and 14 days full access.
             </p>
+
+            <div className="pt-2 flex items-center justify-center gap-2">
+              <div className="p-1 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center text-xs font-semibold">
+                <button
+                  onClick={() => setBillingCycle('monthly')}
+                  className={cn('px-4 py-1.5 rounded-full transition-all', billingCycle === 'monthly' ? 'bg-indigo-600 text-white' : 'text-zinc-400')}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingCycle('annual')}
+                  className={cn('px-4 py-1.5 rounded-full transition-all flex items-center gap-1', billingCycle === 'annual' ? 'bg-indigo-600 text-white' : 'text-zinc-400')}
+                >
+                  Annual <span className="text-[9px] text-emerald-300 font-mono bg-emerald-500/20 px-1 rounded">Save 20%</span>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Starter Plan */}
-            <div className="rounded-xl border bg-card p-6 flex flex-col justify-between space-y-6">
-              <div>
-                <h3 className="text-base font-bold">Starter</h3>
-                <p className="text-xs text-muted-foreground mt-1">For solo operators and boutique service consultants.</p>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-3xl font-extrabold">₹999</span>
-                  <span className="text-xs text-muted-foreground">/ month</span>
-                </div>
-                <ul className="mt-6 space-y-2 text-xs text-muted-foreground">
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> Up to 100 leads / month</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> AI Intent Scoring (0–100)</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> 1 Team Seat</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> Email & Form Capture</li>
-                </ul>
-              </div>
-              <Link to="/login" className="w-full">
-                <Button variant="outline" className="w-full text-xs">Start 14-Day Free Trial</Button>
-              </Link>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {pricingPlans.map((plan) => {
+              const price = billingCycle === 'annual' ? plan.priceAnnual : plan.priceMonthly
+              return (
+                <div
+                  key={plan.id}
+                  className={cn(
+                    'p-8 rounded-3xl border flex flex-col justify-between transition-all duration-200 relative',
+                    plan.popular
+                      ? 'border-indigo-500 bg-gradient-to-b from-indigo-950/30 to-[#0E1118] shadow-2xl ring-1 ring-indigo-500/50 scale-[1.02]'
+                      : 'border-white/[0.08] bg-white/[0.02]'
+                  )}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-indigo-600 text-white font-bold text-[10px] uppercase font-mono px-3 py-0.5">
+                        Most Popular
+                      </Badge>
+                    </div>
+                  )}
 
-            {/* Growth Plan (Most Popular) */}
-            <div className="rounded-xl border-2 border-indigo-600 bg-card p-6 flex flex-col justify-between space-y-6 relative shadow-lg">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full uppercase">
-                Most Popular
-              </div>
-              <div>
-                <h3 className="text-base font-bold">Growth</h3>
-                <p className="text-xs text-muted-foreground mt-1">For growing sales teams and digital agencies.</p>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-3xl font-extrabold">₹2,999</span>
-                  <span className="text-xs text-muted-foreground">/ month</span>
-                </div>
-                <ul className="mt-6 space-y-2 text-xs text-foreground font-medium">
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-indigo-600" /> Up to 1,000 leads / month</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-indigo-600" /> Official WhatsApp Business API</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-indigo-600" /> FollowUpOS AI Copilot</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-indigo-600" /> 5 Team Seats with SLA tracking</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-indigo-600" /> Automated Smart Cadences</li>
-                </ul>
-              </div>
-              <Link to="/login" className="w-full">
-                <Button className="w-full text-xs bg-indigo-600 hover:bg-indigo-700 text-white">Start 14-Day Free Trial</Button>
-              </Link>
-            </div>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+                      <p className="text-xs text-zinc-400 mt-1">{plan.desc}</p>
+                    </div>
 
-            {/* Agency Plan */}
-            <div className="rounded-xl border bg-card p-6 flex flex-col justify-between space-y-6">
-              <div>
-                <h3 className="text-base font-bold">Agency</h3>
-                <p className="text-xs text-muted-foreground mt-1">For established agencies, high-ticket brokers, and sales teams.</p>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-3xl font-extrabold">₹7,999</span>
-                  <span className="text-xs text-muted-foreground">/ month</span>
+                    <div className="pt-2 flex items-baseline gap-1 font-mono">
+                      <span className="text-4xl font-black text-white">₹{price.toLocaleString()}</span>
+                      <span className="text-xs text-zinc-400">/ month</span>
+                    </div>
+
+                    <ul className="space-y-2.5 pt-4 border-t border-white/[0.06] text-xs text-zinc-300">
+                      {plan.features.map((f, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="pt-6 border-t border-white/[0.06] mt-6">
+                    <Link to="/register">
+                      <Button className={cn('w-full text-xs font-bold h-10 rounded-xl', plan.popular ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-white text-black hover:bg-zinc-200')}>
+                        Start Free Trial
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-                <ul className="mt-6 space-y-2 text-xs text-muted-foreground">
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> Up to 5,000 leads / month</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> 15 Team Member Seats</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> Visual Automation Builder V2</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> Custom SLA & Dedicated Manager</li>
-                </ul>
-              </div>
-              <Link to="/login" className="w-full">
-                <Button variant="outline" className="w-full text-xs">Start 14-Day Free Trial</Button>
-              </Link>
-            </div>
+              )
+            })}
           </div>
         </div>
       </section>
 
-      {/* 12. FAQ SECTION */}
-      <section id="faq" className="py-20 border-b border-border/40 bg-muted/20">
-        <div className="max-w-3xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+      {/* CHAPTER 08: HONEST FREQUENTLY ASKED QUESTIONS */}
+      <section className="py-24 relative bg-[#090B0F] border-t border-white/[0.06]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="text-center space-y-2">
+            <h2 className="text-3xl font-bold text-white tracking-tight">
               Frequently Asked Questions
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              Honest, clear answers about how FollowUpOS works.
+            <p className="text-xs sm:text-sm text-zinc-400">
+              Clear answers to technical, functional, and operational questions.
             </p>
           </div>
 
           <div className="space-y-3">
-            {faqs.map((item, idx) => {
+            {faqItems.map((item, idx) => {
               const isOpen = openFaq === idx
               return (
                 <div
                   key={idx}
-                  className="rounded-xl border bg-card p-4 transition-colors cursor-pointer"
                   onClick={() => setOpenFaq(isOpen ? null : idx)}
+                  className="p-5 rounded-2xl border border-white/[0.08] bg-[#0E1118]/80 cursor-pointer transition-all hover:border-white/[0.15]"
                 >
-                  <div className="flex items-center justify-between text-xs sm:text-sm font-semibold text-foreground">
-                    <span>{item.q}</span>
-                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center justify-between gap-4">
+                    <h4 className="text-sm font-bold text-white">{item.q}</h4>
+                    <ChevronDown className={cn('w-4 h-4 text-zinc-400 shrink-0 transition-transform', isOpen && 'rotate-180')} />
                   </div>
                   {isOpen && (
-                    <p className="text-xs text-muted-foreground leading-relaxed mt-2.5 pt-2 border-t">
+                    <p className="text-xs text-zinc-400 mt-3 leading-relaxed pt-3 border-t border-white/[0.06] animate-fade-in">
                       {item.a}
                     </p>
                   )}
@@ -633,50 +410,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 13. FINAL CTA */}
-      <section className="py-20 bg-indigo-600 text-white text-center">
-        <div className="max-w-4xl mx-auto px-4 space-y-5">
-          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
-            Every lead deserves a follow-up.
-          </h2>
-          <p className="text-indigo-100 text-sm sm:text-base max-w-xl mx-auto">
-            Stop letting valuable opportunities disappear into unread messages, forgotten tasks, and spreadsheets.
-          </p>
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/login">
-              <Button size="lg" className="bg-white text-indigo-700 hover:bg-white/90 font-bold px-8 h-12">
-                Start Free 14-Day Trial
-                <ArrowRight className="w-4 h-4 ml-1.5" />
-              </Button>
-            </Link>
-            <Link to="/login">
-              <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10 h-12 px-6">
-                Try Live Interactive Demo
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* 14. FOOTER */}
-      <footer className="py-10 border-t border-border/50 text-xs text-muted-foreground">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center text-white">
-              <Sparkles className="w-3.5 h-3.5" />
-            </div>
-            <span className="font-bold text-foreground">FollowUpOS</span>
-            <span>© 2026. All rights reserved.</span>
-          </div>
-          <div className="flex gap-6">
-            <a href="#workflow" className="hover:text-foreground">How It Works</a>
-            <a href="#features" className="hover:text-foreground">Features</a>
-            <a href="#pricing" className="hover:text-foreground">Pricing</a>
-            <Link to="/login" className="hover:text-foreground">Login</Link>
-            <Link to="/login" className="hover:text-foreground">Demo</Link>
-          </div>
-        </div>
-      </footer>
+      {/* FOOTER */}
+      <MarketingFooter />
     </div>
   )
 }
