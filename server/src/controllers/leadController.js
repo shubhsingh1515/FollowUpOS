@@ -212,6 +212,42 @@ export const leadController = {
     const { mockObjections } = await import('../services/mockData.js');
     res.json({ success: true, data: { objections: Object.values(mockObjections) } });
   },
+
+  async getConversation(req, res) {
+    const result = await conversationService.getConversationByLeadId(req.params.id, req.organizationId);
+    res.json({ success: true, data: result });
+  },
+
+  async sendMessage(req, res) {
+    const { content, body, aiGenerated } = req.body;
+    const text = content || body;
+    const message = await conversationService.sendMessageByLeadId(
+      req.params.id,
+      req.organizationId,
+      req.user._id,
+      text,
+      { aiGenerated: !!aiGenerated, channel: req.body.channel }
+    );
+    res.status(201).json({ success: true, data: { message } });
+  },
+
+  async aiGenerate(req, res) {
+    const organization = await Organization.findById(req.organizationId);
+    const { conversation } = await conversationService.getConversationByLeadId(req.params.id, req.organizationId);
+    const result = await conversationService.generateReply(
+      conversation._id,
+      req.organizationId,
+      organization,
+      { tone: req.body.tone || organization?.settings?.defaultTone, instruction: req.body.instruction }
+    );
+    res.json({
+      success: true,
+      data: {
+        reply: result.reply,
+        generatedMessage: result.reply,
+      },
+    });
+  },
 };
 
 export default leadController;

@@ -199,6 +199,46 @@ export class ConversationService {
 
     return { reply, conversationId };
   }
+
+  /**
+   * Get or create conversation and messages by leadId
+   */
+  async getConversationByLeadId(leadId, organizationId) {
+    let conversation = await Conversation.findOne({ leadId, organizationId })
+      .populate('contactId')
+      .populate('leadId')
+      .populate('assignedTo', 'name avatar email');
+
+    if (!conversation) {
+      const lead = await Lead.findOne({ _id: leadId, organizationId });
+      if (!lead) throw new AppError('Lead not found', 404, 'LEAD_NOT_FOUND');
+
+      conversation = await Conversation.create({
+        organizationId,
+        leadId,
+        contactId: lead.contactId,
+        channel: lead.source === 'whatsapp' ? 'whatsapp' : lead.source === 'instagram' ? 'instagram' : 'email',
+        status: ['won', 'lost'].includes(lead.status) ? 'closed' : 'open',
+        lastMessageAt: new Date(),
+      });
+      await conversation.populate(['contactId', 'leadId']);
+    }
+
+    const messages = await Message.find({ conversationId: conversation._id })
+      .sort({ createdAt: 1 })
+      .populate('senderId')
+      .lean();
+
+    return { conversation, messages };
+  }
+
+  /**
+   * Send message by leadId
+   */
+  async sendMessageByLeadId(leadId, organizationId, senderId, content, options = {}) {
+    const { conversation } = await this.getConversationByLeadId(leadId, organizationId);
+    return this.sendMessage(conversation._id, organizationId, senderId, content, options);
+  }
 }
 
 export const conversationService = new ConversationService();

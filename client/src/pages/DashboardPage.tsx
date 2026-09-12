@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Users, Flame, Calendar, TrendingUp, Trophy, BarChart,
-  ArrowUpRight, MessageSquare, ChevronRight, Sparkles,
+  ArrowUpRight, MessageSquare, ChevronRight, Sparkles, Plus,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,11 +13,12 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
 import { useAuthStore } from '@/store/authStore'
 import { formatCurrency, getInitials, temperatureLabel, timeAgo, cn } from '@/lib/utils'
-import api from '@/lib/api'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts'
+import api from '@/lib/api'
+import AddLeadModal from '@/components/AddLeadModal'
 
 function KPICard({
   title, value, subtitle, icon: Icon, iconColor, trend, loading,
@@ -66,6 +68,8 @@ const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'
 
 export default function DashboardPage() {
   const { user, organization } = useAuthStore()
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const navigate = useNavigate()
 
   const { data: overview, isLoading: overviewLoading } = useQuery({
     queryKey: ['analytics', 'overview'],
@@ -104,6 +108,14 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 lg:p-6 space-y-6 animate-fade-in">
+      <AddLeadModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={(newLead) => {
+          if (newLead?._id) navigate(`/leads/${newLead._id}`)
+        }}
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -115,8 +127,9 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link to="/leads/new">Add Lead</Link>
+          <Button variant="outline" size="sm" onClick={() => setIsAddModalOpen(true)}>
+            <Plus className="w-4 h-4 mr-1.5" />
+            Add Lead
           </Button>
           <Button asChild size="sm">
             <Link to="/followups">

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Search, Filter, Plus, Star, Flame, ChevronDown,
   MoreHorizontal, Eye, MessageSquare, Calendar, Archive,
@@ -18,6 +18,7 @@ import {
 } from '@/lib/utils'
 import api from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
+import AddLeadModal from '@/components/AddLeadModal'
 
 const STAGES = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won', 'lost']
 const TEMPERATURES = ['hot', 'warm', 'cold']
@@ -87,9 +88,11 @@ function LeadRow({ lead }: { lead: any }) {
               <Eye className="w-3.5 h-3.5" />
             </Button>
           </Link>
-          <Button size="icon" variant="ghost" className="h-7 w-7">
-            <MessageSquare className="w-3.5 h-3.5" />
-          </Button>
+          <Link to="/inbox">
+            <Button size="icon" variant="ghost" className="h-7 w-7">
+              <MessageSquare className="w-3.5 h-3.5" />
+            </Button>
+          </Link>
         </div>
       </td>
     </tr>
@@ -97,13 +100,21 @@ function LeadRow({ lead }: { lead: any }) {
 }
 
 export default function LeadsPage() {
+  const [searchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [temperature, setTemperature] = useState('')
   const [source, setSource] = useState('')
   const [page, setPage] = useState(1)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const { organization } = useAuthStore()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setIsAddModalOpen(true)
+    }
+  }, [searchParams])
 
   const { data, isLoading } = useQuery<any>({
     queryKey: ['leads', { search, status, temperature, source, page }],
@@ -121,6 +132,15 @@ export default function LeadsPage() {
 
   return (
     <div className="p-4 lg:p-6 space-y-4 animate-fade-in">
+      {/* Add Lead Modal */}
+      <AddLeadModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={(newLead) => {
+          if (newLead?._id) navigate(`/leads/${newLead._id}`)
+        }}
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div>
@@ -130,7 +150,7 @@ export default function LeadsPage() {
           </p>
         </div>
         <div className="sm:ml-auto flex items-center gap-2">
-          <Button size="sm" onClick={() => navigate('/leads/new')}>
+          <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
             <Plus className="w-4 h-4 mr-1.5" />
             Add Lead
           </Button>

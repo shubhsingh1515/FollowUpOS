@@ -16,6 +16,9 @@ router.delete('/:id', leadController.archive);
 
 router.get('/:id/score-explanation', leadController.getScoreExplanation);
 router.get('/:id/objections', leadController.getObjections);
+router.get('/:id/conversation', leadController.getConversation);
+router.post('/:id/messages', leadController.sendMessage);
+router.post('/:id/ai-generate', leadController.aiGenerate);
 router.post('/:id/analyze', leadController.analyze);
 router.post('/:id/generate-reply', leadController.generateReply);
 router.post('/:id/schedule-followup', leadController.scheduleFollowUp);
