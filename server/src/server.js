@@ -1,12 +1,14 @@
 import 'dotenv/config';
 import app from './app.js';
-import { config } from './config/config.js';
+import { config, validateProductionConfig } from './config/config.js';
 import { connectDatabase } from './config/database.js';
 import { logger } from './utils/logger.js';
 import { startScheduler } from './jobs/scheduler.js';
 
 async function startServer() {
   try {
+    // Validate configuration
+    validateProductionConfig();
     // Connect to MongoDB with graceful fallback
     try {
       await connectDatabase();

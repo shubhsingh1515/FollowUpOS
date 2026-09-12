@@ -50,4 +50,6 @@ class EncryptionService {
 }
 
 export const encryptionService = new EncryptionService();
+export const encryptToken = (text) => encryptionService.encrypt(text);
+export const decryptToken = (ciphertext) => encryptionService.decrypt(ciphertext);
 export default encryptionService;

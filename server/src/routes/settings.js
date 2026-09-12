@@ -5,6 +5,7 @@ import { Organization } from '../models/Organization.js';
 import { User } from '../models/User.js';
 import { Notification } from '../models/Notification.js';
 import { Integration } from '../models/Integration.js';
+import { integrationService } from '../services/IntegrationService.js';
 import { AppError } from '../utils/errors.js';
 
 const router = Router();
@@ -136,70 +137,23 @@ router.post('/notifications/mark-read', async (req, res) => {
 
 // Get integrations
 router.get('/integrations', async (req, res) => {
-  const allProviders = ['email', 'whatsapp', 'instagram', 'facebook', 'linkedin', 'calendly', 'google_forms'];
-  
-  if (mongoose.connection.readyState !== 1) {
-    const result = allProviders.map((p) => ({
-      provider: p,
-      status: p === 'whatsapp' || p === 'email' ? 'connected' : 'disconnected',
-      lastSyncAt: new Date().toISOString(),
-      metadata: {},
-    }));
-    return res.json({ success: true, data: { integrations: result } });
-  }
-
-  const integrations = await Integration.find({ organizationId: req.organizationId })
-    .select('-accessToken -refreshToken');
-  
-  const integrated = {};
-  integrations.forEach((i) => { integrated[i.provider] = i; });
-  
-  const result = allProviders.map((p) => ({
-    provider: p,
-    status: integrated[p]?.status || 'disconnected',
-    lastSyncAt: integrated[p]?.lastSyncAt,
-    errorMessage: integrated[p]?.errorMessage,
-    metadata: integrated[p]?.metadata,
-  }));
-
-  res.json({ success: true, data: { integrations: result } });
+  const integrations = await integrationService.getIntegrations(req.organizationId);
+  res.json({ success: true, data: { integrations } });
 });
 
-// Connect integration (mock/demo)
+// Connect/Configure integration
 router.post('/integrations/:provider/connect', async (req, res) => {
   const { provider } = req.params;
-  
-  if (mongoose.connection.readyState !== 1) {
-    return res.json({ success: true, message: `${provider} connected successfully` });
-  }
-
-  await Integration.findOneAndUpdate(
-    { organizationId: req.organizationId, provider },
-    {
-      organizationId: req.organizationId,
-      provider,
-      status: 'connected',
-      metadata: req.body.metadata || {},
-      lastSyncAt: new Date(),
-    },
-    { upsert: true, new: true }
-  );
-
-  res.json({ success: true, message: `${provider} connected successfully` });
+  const credentials = req.body.credentials || req.body.metadata || {};
+  const result = await integrationService.saveIntegration(req.organizationId, provider, credentials);
+  res.json({ success: true, message: `${provider} connected successfully`, data: result });
 });
 
 // Disconnect integration
 router.delete('/integrations/:provider', async (req, res) => {
   const { provider } = req.params;
-  if (mongoose.connection.readyState !== 1) {
-    return res.json({ success: true, message: `${provider} disconnected` });
-  }
-
-  await Integration.findOneAndUpdate(
-    { organizationId: req.organizationId, provider },
-    { status: 'disconnected', accessToken: null, refreshToken: null }
-  );
-  res.json({ success: true, message: 'Integration disconnected' });
+  const result = await integrationService.disconnectIntegration(req.organizationId, provider);
+  res.json({ success: true, message: 'Integration disconnected', data: result });
 });
 
 export default router;

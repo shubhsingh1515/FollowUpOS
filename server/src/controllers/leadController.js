@@ -47,6 +47,12 @@ export const leadController = {
     res.status(201).json({ success: true, data: result });
   },
 
+  async checkDuplicate(req, res) {
+    const { email, phone } = req.body;
+    const isDuplicate = await leadService.checkDuplicate(req.organizationId, { email, phone });
+    res.json({ success: true, data: { isDuplicate: !!isDuplicate } });
+  },
+
   async update(req, res) {
     const lead = await leadService.updateLead(
       req.params.id,

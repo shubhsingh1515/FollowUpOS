@@ -15,7 +15,7 @@ const router = Router();
  * GET /api/public/forms/:formId
  * Fetch form configuration for embed widget
  */
-router.get('/forms/:formId', async (req, res) => {
+router.get(['/forms/:formId', '/widget/:formId'], async (req, res) => {
   try {
     const { formId } = req.params;
     let form = await LeadForm.findOne({ publicId: formId, isActive: true });
@@ -156,23 +156,26 @@ router.post('/leads', async (req, res) => {
     const authHeader = req.headers.authorization;
     let organization;
 
-    if (authHeader && authHeader.startsWith('Bearer fup_')) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
       const apiKey = authHeader.replace('Bearer ', '').trim();
       organization = await Organization.findOne({ 'settings.apiKey': apiKey });
-    }
-
-    if (!organization && req.body.organizationSlug) {
+      if (!organization) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid or revoked API Key. Please provide a valid Organization API Key.',
+          code: 'UNAUTHORIZED_API_KEY'
+        });
+      }
+    } else if (req.body.organizationSlug) {
       organization = await Organization.findOne({ slug: req.body.organizationSlug });
-    }
-
-    if (!organization && config.demo.enabled) {
+    } else if (config.demo.enabled) {
       organization = await Organization.findOne({ isDemo: true }) || await Organization.findOne();
     }
 
     if (!organization) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid API Key or organization not found',
+        error: 'Authorization header (Bearer fup_live_...) or organization slug required',
         code: 'UNAUTHORIZED_API_KEY'
       });
     }
@@ -237,17 +240,17 @@ router.post('/leads', async (req, res) => {
  * POST /api/public/webhooks/leads/:webhookToken
  * Inbound Webhook Token for Zapier, Make, Webflow
  */
-router.post('/webhooks/leads/:webhookToken', async (req, res) => {
+router.post(['/webhooks/leads/:webhookToken', '/webhook/lead'], async (req, res) => {
   try {
-    const { webhookToken } = req.params;
+    const webhookToken = req.params.webhookToken || 'demo_webhook_token';
     let org = await Organization.findOne({ 'settings.webhookToken': webhookToken });
 
-    if (!org && (webhookToken === 'demo_webhook_token' || config.demo.enabled)) {
+    if (!org && webhookToken === 'demo_webhook_token') {
       org = await Organization.findOne({ isDemo: true }) || await Organization.findOne();
     }
 
     if (!org) {
-      return res.status(404).json({ error: 'Invalid webhook token' });
+      return res.status(404).json({ success: false, error: 'Invalid or expired webhook token', code: 'INVALID_WEBHOOK_TOKEN' });
     }
 
     const { name, email, phone, company, message, service, budget, source = 'webhook' } = req.body;

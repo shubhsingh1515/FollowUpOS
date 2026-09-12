@@ -13,6 +13,19 @@ import { v4 as uuidv4 } from 'uuid';
 
 export class LeadService {
   /**
+   * Check for duplicate contact/lead by email or phone
+   */
+  async checkDuplicate(organizationId, { email, phone } = {}) {
+    if (!email && !phone) return false;
+    const conditions = [];
+    if (email) conditions.push({ email: email.toLowerCase() });
+    if (phone) conditions.push({ phone });
+    if (conditions.length === 0) return false;
+    const contact = await Contact.findOne({ organizationId, $or: conditions });
+    return !!contact;
+  }
+
+  /**
    * Get leads with filters and pagination
    */
   async getLeads(organizationId, filters = {}, pagination = {}) {

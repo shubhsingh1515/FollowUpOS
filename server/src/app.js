@@ -28,6 +28,7 @@ import billingRoutes from './routes/billing.js';
 import webhookRoutes from './routes/webhooks.js';
 import adminRoutes from './routes/admin.js';
 import supportRoutes from './routes/support.js';
+import integrationsRoutes from './routes/integrations.js';
 
 const app = express();
 
@@ -110,6 +111,7 @@ app.use('/api/followups', followUpRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/deals', dealRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/integrations', integrationsRoutes);
 app.use('/api/copilot', copilotRoutes);
 app.use('/api/campaigns', campaignsRoutes);
 

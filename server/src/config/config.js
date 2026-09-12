@@ -87,4 +87,25 @@ export const config = {
   },
 };
 
+export function validateProductionConfig() {
+  if (config.env !== 'production' || config.demo.enabled) {
+    return { valid: true, warnings: [] };
+  }
+
+  const missing = [];
+  if (!process.env.MONGODB_URI) missing.push('MONGODB_URI');
+  if (!process.env.JWT_ACCESS_SECRET || process.env.JWT_ACCESS_SECRET.includes('dev-')) missing.push('JWT_ACCESS_SECRET');
+  if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET.includes('dev-')) missing.push('JWT_REFRESH_SECRET');
+  if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length < 32) missing.push('ENCRYPTION_KEY');
+  if (!process.env.OPENAI_API_KEY) missing.push('OPENAI_API_KEY');
+  if (!process.env.RAZORPAY_KEY_ID && !process.env.STRIPE_SECRET_KEY) missing.push('RAZORPAY_KEY_ID or STRIPE_SECRET_KEY');
+
+  if (missing.length > 0) {
+    const errorMsg = `CRITICAL STARTUP CONFIGURATION ERROR: Missing mandatory production environment variables: ${missing.join(', ')}`;
+    throw new Error(errorMsg);
+  }
+
+  return { valid: true, warnings: [] };
+}
+
 export default config;
