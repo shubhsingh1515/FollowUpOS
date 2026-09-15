@@ -14,7 +14,7 @@ export const config = {
   },
 
   client: {
-    url: process.env.CLIENT_URL || 'http://localhost:5173',
+    url: process.env.CLIENT_URL || 'http://localhost:5174',
   },
 
   openai: {
@@ -25,7 +25,7 @@ export const config = {
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    redirectUri: process.env.GOOGLE_REDIRECT_URI || '',
+    callbackUrl: process.env.GOOGLE_CALLBACK_URL || process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/api/auth/google/callback',
   },
 
   smtp: {

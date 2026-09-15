@@ -14,9 +14,13 @@ Use this checklist before opening FollowUpOS to real paying customers and deploy
 ---
 
 ## 🔐 2. Authentication & Secrets
+- [ ] **Google OAuth 2.0 Client**: Google Cloud Project configured with OAuth Consent Screen, verified scopes (`openid`, `email`, `profile`), and production authorized origins/redirect URIs (`https://api.followupos.com/api/auth/google/callback`).
+- [ ] **Google Secrets Configured**: `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` added to production `.env` (Platform Owner level only).
 - [ ] **JWT Secrets**: Strong random 64-character hex strings generated for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`.
 - [ ] **Encryption Key**: 64-character hex string configured for `ENCRYPTION_KEY` (AES-256-GCM).
 - [ ] **Super Admin Account**: Initial platform administrator bootstrapped via `npm run create-super-admin`.
+- [ ] **Email Verification Mandatory**: Verified unverified email accounts receive `EMAIL_NOT_VERIFIED` on login attempts and cannot bypass security guards.
+- [ ] **Password Reset Tests**: Verified single-use hashed token reset invalidates active refresh sessions.
 - [ ] **Demo Mode Disabled**: `DEMO_MODE=false` in production `.env` to enforce real provider credentials.
 - [ ] **CORS Configuration**: Restrict `cors.origin` in `server/src/app.js` strictly to the verified frontend domain.
 

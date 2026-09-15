@@ -5,6 +5,10 @@ import {
   LandingPage,
   LoginPage,
   RegisterPage,
+  VerifyEmailPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
+  GoogleCallbackPage,
   DashboardPage,
   LeadsPage,
   LeadDetailPage,
@@ -94,6 +98,18 @@ export default function App() {
           </PublicAuthRoute>
         }
       />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicAuthRoute>
+            <ForgotPasswordPage />
+          </PublicAuthRoute>
+        }
+      />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/auth/callback" element={<GoogleCallbackPage />} />
+      <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
 
       {/* Protected App Routes */}
       <Route

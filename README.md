@@ -61,6 +61,10 @@ flowchart TD
 
 ## ✨ Production Capabilities
 
+- **Production Authentication & Security**:
+  - **Continue with Google**: Real Google OAuth 2.0 / OpenID Connect flow with verified server-side identity and safe account linking.
+  - **Email/Password Signup**: Mandatory email verification with single-use SHA-256 hashed tokens and rate-limited resend.
+  - **Password Reset**: Cryptographically random hashed reset tokens with session invalidation.
 - **Daily Sales Execution Cockpit (`/today`)**: Prioritized daily task feed with one-click follow-up dispatch and hot lead alerts.
 - **AI Sales Copilot (`/copilot`)**: Interactive chat assistant that summarizes objection history, suggests personalized outreach, and drafts contextual replies.
 - **Multi-Channel Lead Ingestion**:

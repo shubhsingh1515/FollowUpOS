@@ -87,8 +87,28 @@ Generates minified static assets in `client/dist/`.
 
 | Role | Accessible Pages | Permissions |
 | :--- | :--- | :--- |
-| **Visitor** | `/`, `/services`, `/how-it-works`, `/pricing`, `/integrations-showcase`, `/privacy`, `/terms`, `/support`, `/login`, `/register` | Explore marketing, view plans, register workspace. |
+| **Visitor** | `/`, `/services`, `/how-it-works`, `/pricing`, `/integrations-showcase`, `/privacy`, `/terms`, `/support`, `/login`, `/register`, `/verify-email`, `/forgot-password`, `/reset-password` | Explore marketing, view plans, register workspace, verify email, reset password. |
 | **Workspace Owner** | All app routes (`/today`, `/leads`, `/pipeline`, `/copilot`, `/automations`, `/integrations`, `/billing`, `/team`, `/settings`) | Full control: upgrade/cancel billing, rotate API keys, configure team. |
 | **Workspace Admin** | All app routes except subscription billing cancellation. | Manage integrations, configure sequences, manage leads. |
 | **Sales Rep** | `/today`, `/leads`, `/contacts`, `/pipeline`, `/copilot`, `/inbox` | Execute daily outreach, edit assigned leads, send AI messages. Restricted from billing & API key rotation. |
 | **Super Admin** | `/admin/*` (Overview, Organizations, Subscriptions, Usage, Support, Feature Flags, System Health, Audit Logs) | Platform-level management, tenant suspension, health monitoring. |
+
+---
+
+## 🔐 Customer Authentication Journey
+
+1. **Sign Up (`/register`)**:
+   - Option A: **Continue with Google** (instant Google OAuth 2.0 verification, auto-verified email, direct routing to `/onboarding`).
+   - Option B: **Email + Password** (creates tenant workspace with `isEmailVerified: false`, triggers secure token email, routes to `/verify-email`).
+2. **Email Verification (`/verify-email`)**:
+   - Screen displays masked email address (`a••••@company.com`).
+   - Resend verification button with **60-second cooldown timer**.
+   - Change unverified email form.
+   - Email link (`/verify-email?token=...&email=...`) auto-validates with backend, verifies account, and unlocks the workspace.
+3. **Sign In (`/login`)**:
+   - Supports Google Sign-In and Work Email/Password with show/hide password toggle.
+   - If credentials are valid but email is unverified, gracefully redirects to `/verify-email`.
+4. **Password Reset (`/forgot-password` & `/reset-password`)**:
+   - Request reset link with anti-enumeration protection.
+   - Reset password form with token validation, matching passwords, and session revocation.
+

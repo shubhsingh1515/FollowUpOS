@@ -415,7 +415,7 @@ export class LeadService {
     endOfDay.setHours(23, 59, 59, 999);
 
     // Hot leads with pending follow-ups
-    const leads = await Lead.find({
+    let leads = await Lead.find({
       organizationId,
       isArchived: false,
       status: { $nin: ['won', 'lost'] },
@@ -429,6 +429,18 @@ export class LeadService {
       .sort({ leadScore: -1, nextFollowUpAt: 1 })
       .limit(limit)
       .lean();
+
+    if (leads.length === 0) {
+      leads = await Lead.find({
+        organizationId,
+        isArchived: false,
+        status: { $nin: ['won', 'lost'] },
+      })
+        .populate('contactId', 'fullName company')
+        .sort({ leadScore: -1, createdAt: -1 })
+        .limit(limit)
+        .lean();
+    }
 
     return leads.map((lead) => ({
       ...lead,

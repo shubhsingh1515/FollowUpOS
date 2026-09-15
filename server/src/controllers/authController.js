@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { authService } from '../services/AuthService.js';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/config.js';
+import { logger } from '../utils/logger.js';
 
 export const authController = {
   async register(req, res) {
@@ -43,17 +44,19 @@ export const authController = {
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.status(201).json({
       success: true,
-      message: 'Account created successfully',
+      message: 'Account created successfully. Please check your email to verify your account.',
       data: {
         user: result.user,
         organization: result.organization,
         accessToken: result.accessToken,
+        requiresEmailVerification: true,
+        email: result.email,
       },
     });
   },
@@ -65,7 +68,7 @@ export const authController = {
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -80,14 +83,144 @@ export const authController = {
     });
   },
 
+  async googleAuth(req, res) {
+    try {
+      const state = req.query.state || 'google_auth';
+      const authUrl = authService.getGoogleAuthUrl(state);
+      res.redirect(authUrl);
+    } catch (err) {
+      logger.error('Failed to initiate Google OAuth:', err);
+      res.status(err.statusCode || 500).json({
+        success: false,
+        code: err.code || 'GOOGLE_AUTH_ERROR',
+        message: err.message || 'Failed to initiate Google sign-in',
+      });
+    }
+  },
+
+  async googleCallback(req, res) {
+    const { code, state, error } = req.query;
+
+    if (error) {
+      logger.warn('Google OAuth cancelled or returned error:', error);
+      return res.redirect(`${config.client.url}/login?error=${encodeURIComponent('Google sign-in was cancelled.')}`);
+    }
+
+    if (!code) {
+      return res.redirect(`${config.client.url}/login?error=${encodeURIComponent('Missing authorization code from Google.')}`);
+    }
+
+    try {
+      const result = await authService.handleGoogleCallback({ code, state });
+
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      // Redirect to frontend callback handler with access token
+      const redirectTarget = `${config.client.url}/auth/callback?token=${encodeURIComponent(result.accessToken)}&isNew=${result.isNewUser ? 'true' : 'false'}`;
+      res.redirect(redirectTarget);
+    } catch (err) {
+      logger.error('Google OAuth callback failed:', err);
+      const errorMsg = err.message || 'Google sign-in failed. Please try again.';
+      res.redirect(`${config.client.url}/login?error=${encodeURIComponent(errorMsg)}`);
+    }
+  },
+
+  async googleToken(req, res) {
+    const { idToken, credential } = req.body;
+    const token = idToken || credential;
+    const result = await authService.verifyGoogleIdToken(token);
+
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      success: true,
+      message: 'Google sign-in successful',
+      data: {
+        user: result.user,
+        organization: result.organization,
+        accessToken: result.accessToken,
+        isNewUser: result.isNewUser,
+      },
+    });
+  },
+
+  async verifyEmail(req, res) {
+    const { token, email } = req.body;
+    const result = await authService.verifyEmail({ token, email });
+
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      success: true,
+      message: result.message,
+      data: {
+        user: result.user,
+        organization: result.organization,
+        accessToken: result.accessToken,
+      },
+    });
+  },
+
+  async resendVerification(req, res) {
+    const email = req.body.email || req.user?.email;
+    const result = await authService.resendVerification(email);
+    res.json(result);
+  },
+
+  async changeVerificationEmail(req, res) {
+    const { currentEmail, newEmail } = req.body;
+    const result = await authService.changeVerificationEmail({ currentEmail, newEmail });
+    res.json(result);
+  },
+
+  async forgotPassword(req, res) {
+    const { email } = req.body;
+    const result = await authService.forgotPassword(email);
+    res.json(result);
+  },
+
+  async resetPassword(req, res) {
+    const { token, email, newPassword } = req.body;
+    const result = await authService.resetPassword({ token, email, newPassword });
+    res.json(result);
+  },
+
   async logout(req, res) {
-    if (mongoose.connection.readyState === 1 && req.user?._id) {
-      try {
-        await authService.logout(req.user._id);
-      } catch {}
+    try {
+      let userId = req.user?._id;
+      if (!userId && req.headers.authorization?.startsWith('Bearer ')) {
+        const token = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.decode(token);
+        if (decoded?.userId) {
+          userId = decoded.userId;
+        }
+      }
+      if (userId && mongoose.connection.readyState === 1) {
+        await authService.logout(userId);
+      }
+    } catch (err) {
+      logger.warn('Error during logout session cleanup:', err?.message);
     }
     res.clearCookie('refreshToken');
-    res.json({ success: true, message: 'Logged out successfully' });
+    if (req.method === 'GET') {
+      return res.redirect(`${config.client.url}/login`);
+    }
+    return res.json({ success: true, message: 'Logged out successfully' });
   },
 
   async refresh(req, res) {
@@ -101,7 +234,7 @@ export const authController = {
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -140,29 +273,6 @@ export const authController = {
     });
   },
 
-  async forgotPassword(req, res) {
-    const { email } = req.body;
-    const result = await authService.forgotPassword(email);
-    res.json(result);
-  },
-
-  async resetPassword(req, res) {
-    const { token, email, newPassword } = req.body;
-    const result = await authService.resetPassword({ token, email, newPassword });
-    res.json(result);
-  },
-
-  async verifyEmail(req, res) {
-    const { token, email } = req.body;
-    const result = await authService.verifyEmail({ token, email });
-    res.json(result);
-  },
-
-  async resendVerification(req, res) {
-    const result = await authService.resendVerification(req.user._id);
-    res.json(result);
-  },
-
   async changePassword(req, res) {
     if (mongoose.connection.readyState !== 1) {
       return res.json({ success: true, message: 'Password changed successfully (Demo Mode)' });
@@ -174,3 +284,4 @@ export const authController = {
 };
 
 export default authController;
+

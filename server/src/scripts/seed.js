@@ -131,6 +131,7 @@ async function seed() {
     passwordHash: shubhamPasswordHash,
     role: 'owner',
     organizationId: org._id,
+    isEmailVerified: true,
     onboardingCompleted: true,
     lastLoginAt: new Date(),
     avatar: null,
@@ -142,6 +143,7 @@ async function seed() {
     passwordHash: demoPasswordHash,
     role: 'owner',
     organizationId: org._id,
+    isEmailVerified: true,
     onboardingCompleted: true,
     lastLoginAt: new Date(),
     avatar: null,
@@ -153,6 +155,7 @@ async function seed() {
     passwordHash: demoPasswordHash,
     role: 'sales_rep',
     organizationId: org._id,
+    isEmailVerified: true,
     onboardingCompleted: true,
     avatar: null,
   });
@@ -163,6 +166,7 @@ async function seed() {
     passwordHash: demoPasswordHash,
     role: 'manager',
     organizationId: org._id,
+    isEmailVerified: true,
     onboardingCompleted: true,
     avatar: null,
   });

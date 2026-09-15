@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Lead } from '../models/Lead.js';
 import { Contact } from '../models/Contact.js';
 import { Conversation } from '../models/Conversation.js';
@@ -6,15 +7,39 @@ import { Deal } from '../models/Deal.js';
 import { FollowUpTask } from '../models/FollowUpTask.js';
 import { User } from '../models/User.js';
 
+function toObjectId(id) {
+  if (!id) return null;
+  if (id instanceof mongoose.Types.ObjectId) return id;
+  try {
+    return new mongoose.Types.ObjectId(id);
+  } catch {
+    return id;
+  }
+}
+
 export class AnalyticsService {
   /**
    * Get dashboard overview KPIs
    */
   async getOverview(organizationId, dateRange = {}) {
+    const orgIdObj = toObjectId(organizationId);
     const { startDate, endDate } = dateRange;
     const now = new Date();
-    const start = startDate ? new Date(startDate) : new Date(now.getFullYear(), now.getMonth(), 1);
+    const hasDateFilter = !!startDate;
+    const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 3600 * 1000);
     const end = endDate ? new Date(endDate) : now;
+
+    const wonDealQuery = { organizationId, status: 'won' };
+    const lostDealQuery = { organizationId, status: 'lost' };
+    const wonRevenueMatch = { organizationId: orgIdObj, stage: 'won' };
+    const lostRevenueMatch = { organizationId: orgIdObj, stage: 'lost' };
+
+    if (hasDateFilter) {
+      wonDealQuery.updatedAt = { $gte: start, $lte: end };
+      lostDealQuery.updatedAt = { $gte: start, $lte: end };
+      wonRevenueMatch.wonAt = { $gte: start, $lte: end };
+      lostRevenueMatch.lostAt = { $gte: start, $lte: end };
+    }
 
     const [
       totalLeads,
@@ -46,22 +71,14 @@ export class AnalyticsService {
         isArchived: false,
         isQualified: true,
       }),
-      Lead.countDocuments({
-        organizationId,
-        status: 'won',
-        updatedAt: { $gte: start, $lte: end },
-      }),
-      Lead.countDocuments({
-        organizationId,
-        status: 'lost',
-        updatedAt: { $gte: start, $lte: end },
-      }),
+      Lead.countDocuments(wonDealQuery),
+      Lead.countDocuments(lostDealQuery),
       FollowUpTask.countDocuments({
         organizationId,
         status: 'pending',
         scheduledAt: {
-          $gte: new Date(now.setHours(0, 0, 0, 0)),
-          $lte: new Date(now.setHours(23, 59, 59, 999)),
+          $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          $lte: new Date(new Date().setHours(23, 59, 59, 999)),
         },
       }),
       FollowUpTask.countDocuments({
@@ -72,7 +89,7 @@ export class AnalyticsService {
       Lead.aggregate([
         {
           $match: {
-            organizationId,
+            organizationId: orgIdObj,
             isArchived: false,
             status: { $nin: ['won', 'lost'] },
           },
@@ -80,7 +97,7 @@ export class AnalyticsService {
         { $group: { _id: null, total: { $sum: '$estimatedValue' } } },
       ]),
       Lead.aggregate([
-        { $match: { organizationId, isArchived: false } },
+        { $match: { organizationId: orgIdObj, isArchived: false } },
         { $group: { _id: null, avg: { $avg: '$leadScore' } } },
       ]),
       Lead.countDocuments({
@@ -92,24 +109,12 @@ export class AnalyticsService {
     ]);
 
     const wonRevenue = await Deal.aggregate([
-      {
-        $match: {
-          organizationId,
-          stage: 'won',
-          wonAt: { $gte: start, $lte: end },
-        },
-      },
+      { $match: wonRevenueMatch },
       { $group: { _id: null, total: { $sum: '$value' } } },
     ]);
 
     const lostRevenue = await Deal.aggregate([
-      {
-        $match: {
-          organizationId,
-          stage: 'lost',
-          lostAt: { $gte: start, $lte: end },
-        },
-      },
+      { $match: lostRevenueMatch },
       { $group: { _id: null, total: { $sum: '$value' } } },
     ]);
 
@@ -140,18 +145,19 @@ export class AnalyticsService {
    * Get leads by source breakdown
    */
   async getLeadsBySource(organizationId, dateRange = {}) {
+    const orgIdObj = toObjectId(organizationId);
     const { startDate, endDate } = dateRange;
     const now = new Date();
-    const start = startDate ? new Date(startDate) : new Date(now.getFullYear(), now.getMonth(), 1);
+    const start = startDate ? new Date(startDate) : null;
     const end = endDate ? new Date(endDate) : now;
 
+    const matchStage = { organizationId: orgIdObj };
+    if (start) {
+      matchStage.createdAt = { $gte: start, $lte: end };
+    }
+
     const data = await Lead.aggregate([
-      {
-        $match: {
-          organizationId,
-          createdAt: { $gte: start, $lte: end },
-        },
-      },
+      { $match: matchStage },
       {
         $group: {
           _id: '$source',
@@ -183,10 +189,11 @@ export class AnalyticsService {
    * Get conversion funnel data
    */
   async getConversionFunnel(organizationId) {
+    const orgIdObj = toObjectId(organizationId);
     const stages = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won'];
 
     const data = await Lead.aggregate([
-      { $match: { organizationId, isArchived: false } },
+      { $match: { organizationId: orgIdObj, isArchived: false } },
       {
         $group: {
           _id: '$status',
@@ -213,6 +220,7 @@ export class AnalyticsService {
    * Get revenue by month
    */
   async getRevenueByMonth(organizationId, months = 6) {
+    const orgIdObj = toObjectId(organizationId);
     const end = new Date();
     const start = new Date();
     start.setMonth(start.getMonth() - months);
@@ -220,7 +228,7 @@ export class AnalyticsService {
     const data = await Deal.aggregate([
       {
         $match: {
-          organizationId,
+          organizationId: orgIdObj,
           stage: 'won',
           wonAt: { $gte: start, $lte: end },
         },
@@ -249,19 +257,22 @@ export class AnalyticsService {
    * Get team performance metrics
    */
   async getTeamPerformance(organizationId, dateRange = {}) {
+    const orgIdObj = toObjectId(organizationId);
     const { startDate, endDate } = dateRange;
     const now = new Date();
-    const start = startDate ? new Date(startDate) : new Date(now.getFullYear(), now.getMonth(), 1);
+    const start = startDate ? new Date(startDate) : null;
     const end = endDate ? new Date(endDate) : now;
 
+    const matchStage = {
+      organizationId: orgIdObj,
+      ownerId: { $ne: null },
+    };
+    if (start) {
+      matchStage.createdAt = { $gte: start, $lte: end };
+    }
+
     const data = await Lead.aggregate([
-      {
-        $match: {
-          organizationId,
-          ownerId: { $ne: null },
-          createdAt: { $gte: start, $lte: end },
-        },
-      },
+      { $match: matchStage },
       {
         $group: {
           _id: '$ownerId',
@@ -300,6 +311,7 @@ export class AnalyticsService {
    * Get leads trend over time
    */
   async getLeadsTrend(organizationId, days = 30) {
+    const orgIdObj = toObjectId(organizationId);
     const end = new Date();
     const start = new Date();
     start.setDate(start.getDate() - days);
@@ -307,7 +319,7 @@ export class AnalyticsService {
     const data = await Lead.aggregate([
       {
         $match: {
-          organizationId,
+          organizationId: orgIdObj,
           createdAt: { $gte: start, $lte: end },
         },
       },

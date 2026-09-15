@@ -78,9 +78,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
 
   const handleLogout = async () => {
-    try { await api.post('/auth/logout') } catch {}
+    try {
+      await api.post('/auth/logout')
+    } catch {}
     logout()
-    navigate('/login')
+    window.location.href = '/login'
   }
 
   const toggleTheme = () => {
@@ -185,11 +187,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <button
-            onClick={handleLogout}
-            className="opacity-60 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              handleLogout()
+            }}
+            id="sidebar-logout-btn"
+            className="p-2 rounded-lg hover:bg-red-500/10 hover:text-red-500 text-muted-foreground transition-all cursor-pointer z-10 shrink-0"
             title="Logout"
+            aria-label="Logout"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -219,18 +228,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* Main content column */}
-      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-        {/* Top Navbar */}
-        <header className="flex items-center gap-3 px-4 lg:px-6 h-14 border-b border-border bg-card/60 backdrop-blur-md shrink-0">
-          <button
-            className="lg:hidden p-2 rounded-lg hover:bg-muted text-muted-foreground"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Top Navigation Bar */}
+        <header className="h-16 border-b border-border bg-card/60 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-4 shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-lg hover:bg-muted text-muted-foreground lg:hidden"
+              aria-label="Open sidebar"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="hidden sm:block">
+              <h2 className="text-sm font-semibold text-foreground tracking-tight">
+                {organization?.name || 'GrowthScale Agency'}
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[11px] text-muted-foreground font-medium">AI Follow-up Engine Active</span>
+              </div>
+            </div>
+          </div>
 
-          {/* Quick Search / Command Palette Launcher */}
+          {/* Quick Search Trigger */}
           <button
             onClick={() => setCommandPaletteOpen(true)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/70 bg-muted/40 hover:bg-muted/80 text-muted-foreground text-xs transition-colors max-w-sm w-full"
@@ -271,6 +292,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Bell className="w-4 h-4" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full" />
             </button>
+
+            {/* Header Sign Out Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              id="header-logout-btn"
+              className="h-8 px-2.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5 ml-1"
+              title="Sign Out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Sign Out</span>
+            </Button>
           </div>
         </header>
 

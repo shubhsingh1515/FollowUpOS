@@ -20,9 +20,21 @@ const userSchema = new mongoose.Schema({
     trim: true,
     default: null,
   },
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local',
+  },
+  googleId: {
+    type: String,
+    sparse: true,
+    index: true,
+  },
   passwordHash: {
     type: String,
-    required: true,
+    required: function () {
+      return this.authProvider === 'local';
+    },
     select: false,
   },
   avatar: {
@@ -54,19 +66,31 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  emailVerificationToken: {
+  emailVerifiedAt: {
+    type: Date,
+    default: null,
+  },
+  emailVerificationTokenHash: {
     type: String,
     select: false,
   },
-  emailVerificationExpires: {
+  emailVerificationExpiresAt: {
     type: Date,
     select: false,
   },
-  passwordResetToken: {
+  lastVerificationResendAt: {
+    type: Date,
+    default: null,
+  },
+  verificationResendCount: {
+    type: Number,
+    default: 0,
+  },
+  passwordResetTokenHash: {
     type: String,
     select: false,
   },
-  passwordResetExpires: {
+  passwordResetExpiresAt: {
     type: Date,
     select: false,
   },
@@ -87,15 +111,16 @@ userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.passwordHash;
   delete obj.refreshToken;
-  delete obj.passwordResetToken;
-  delete obj.passwordResetExpires;
-  delete obj.emailVerificationToken;
-  delete obj.emailVerificationExpires;
+  delete obj.passwordResetTokenHash;
+  delete obj.passwordResetExpiresAt;
+  delete obj.emailVerificationTokenHash;
+  delete obj.emailVerificationExpiresAt;
   delete obj.__v;
   return obj;
 };
 
 userSchema.methods.comparePassword = async function (plainPassword) {
+  if (!this.passwordHash) return false;
   return bcrypt.compare(plainPassword, this.passwordHash);
 };
 

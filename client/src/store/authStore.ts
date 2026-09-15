@@ -7,6 +7,8 @@ export interface User {
   email: string
   role: string
   avatar?: string
+  authProvider?: 'local' | 'google'
+  isEmailVerified?: boolean
   organizationId: string
   onboardingCompleted: boolean
 }
@@ -72,6 +74,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         localStorage.removeItem('accessToken')
+        localStorage.removeItem('followupos-auth')
         set({ user: null, organization: null, accessToken: null, isAuthenticated: false })
       },
     }),

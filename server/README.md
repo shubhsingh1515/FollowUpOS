@@ -168,3 +168,72 @@ Submit an inbound lead from any backend, frontend form, or mobile application:
   ```bash
   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
   ```
+
+---
+
+## 🌐 Google Cloud Console OAuth 2.0 Setup Guide
+
+Follow these exact steps to configure Google Sign-In for FollowUpOS:
+
+### Step 1: Create a Google Cloud Project
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Click **Select a project** > **New Project**.
+3. Name the project `FollowUpOS-Production` and click **Create**.
+
+### Step 2: Configure OAuth Consent Screen
+1. Navigate to **APIs & Services** > **OAuth consent screen**.
+2. Select **External** (unless restricting access to internal Google Workspace users) and click **Create**.
+3. Fill in the App Information:
+   - **App name**: `FollowUpOS`
+   - **User support email**: `support@followupos.com`
+   - **Developer contact information**: `admin@followupos.com`
+4. On the **Scopes** screen, select standard identity scopes:
+   - `openid`
+   - `https://www.googleapis.com/auth/userinfo.email`
+   - `https://www.googleapis.com/auth/userinfo.profile`
+5. Save and continue.
+
+### Step 3: Create OAuth 2.0 Client Credentials
+1. Navigate to **APIs & Services** > **Credentials**.
+2. Click **+ Create Credentials** > **OAuth client ID**.
+3. Application type: **Web application**.
+4. Name: `FollowUpOS Web Client`.
+5. **Authorized JavaScript origins**:
+   - Development: `http://localhost:5174` (or your frontend Vite dev port)
+   - Production: `https://app.followupos.com`
+6. **Authorized redirect URIs**:
+   - Development: `http://localhost:5000/api/auth/google/callback`
+   - Production: `https://api.followupos.com/api/auth/google/callback`
+7. Click **Create**.
+8. Copy the **Client ID** and **Client Secret**.
+
+### Step 4: Configure Server Environment Variables
+Place credentials into `server/.env`:
+```env
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+```
+> [!IMPORTANT]
+> The `GOOGLE_CLIENT_SECRET` is a private server-side secret. Customers never need to provide or view this credential.
+
+---
+
+## 🔐 Production Authentication Endpoints
+
+| Endpoint | Method | Auth | Description | Rate Limited |
+| :--- | :--- | :--- | :--- | :--- |
+| `/api/auth/google` | `GET` | Public | Initiates Google OAuth consent redirect | No |
+| `/api/auth/google/callback` | `GET` | Public | Handles Google OAuth exchange & sets session | No |
+| `/api/auth/google/token` | `POST` | Public | ID Token verification / Google One-Tap exchange | Yes |
+| `/api/auth/register` | `POST` | Public | Email/pass registration (sets `isEmailVerified: false`) | Yes (30/15m) |
+| `/api/auth/login` | `POST` | Public | Account login (enforces `isEmailVerified === true`) | Yes (30/15m) |
+| `/api/auth/verify-email` | `POST` | Public | Verifies SHA-256 token hash & unlocks session | No |
+| `/api/auth/resend-verification` | `POST` | Public | Resends verification email (60s cooldown) | Yes (10/15m) |
+| `/api/auth/change-email` | `POST` | Public | Updates unverified user email & sends fresh token | Yes (10/15m) |
+| `/api/auth/forgot-password` | `POST` | Public | Dispatches single-use reset token hash | Yes (10/15m) |
+| `/api/auth/reset-password` | `POST` | Public | Updates password & revokes existing sessions | Yes (30/15m) |
+| `/api/auth/refresh` | `POST` | Public | Exchanges HttpOnly refresh token for new access JWT | No |
+| `/api/auth/logout` | `POST` | Bearer | Invalidates refresh token & clears cookies | No |
+| `/api/auth/me` | `GET` | Bearer | Returns current authenticated user & workspace profile | No |
+

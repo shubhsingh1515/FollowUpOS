@@ -123,9 +123,10 @@ export function AdminLayout() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                api.post('/auth/logout')
-                navigate('/login')
+              onClick={async () => {
+                try { await api.post('/auth/logout') } catch {}
+                useAuthStore.getState().logout()
+                window.location.href = '/login'
               }}
               className="text-[11px] h-7 px-2 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10"
             >
