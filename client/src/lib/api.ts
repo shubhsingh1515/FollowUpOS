@@ -1,7 +1,17 @@
 import axios from 'axios'
 
+const rawApiUrl = import.meta.env.VITE_API_URL
+
+// Dynamically resolve backend base URL:
+// - If VITE_API_URL is provided (e.g. https://api-followupos.onrender.com or https://api-followupos.onrender.com/api)
+//   ensure it properly routes to the backend's /api prefix.
+// - In local development with Vite dev server, fallback to '/api' (forwarded via Vite dev proxy).
+const resolvedBaseUrl = rawApiUrl
+  ? `${rawApiUrl.trim().replace(/\/api\/?$/, '')}/api`
+  : '/api'
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: resolvedBaseUrl,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
