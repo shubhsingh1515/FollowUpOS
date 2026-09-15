@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import api from '@/lib/api'
+import { useAuthStore } from '@/store/authStore'
 
 export function AdminLayout() {
   const location = useLocation()

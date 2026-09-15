@@ -49,6 +49,31 @@ interface IntegrationCatalogItem {
   documentationUrl?: string
 }
 
+function getGoogleAppsScript(url: string) {
+  return `function onFormSubmit(e) {
+  var responses = e.namedValues || {};
+  var payload = {
+    name: (responses['Name'] && responses['Name'][0]) || (responses['Full Name'] && responses['Full Name'][0]) || 'Inbound Lead',
+    email: (responses['Email'] && responses['Email'][0]) || '',
+    phone: (responses['Phone'] && responses['Phone'][0]) || (responses['WhatsApp'] && responses['WhatsApp'][0]) || '',
+    company: (responses['Company'] && responses['Company'][0]) || '',
+    service: (responses['Service'] && responses['Service'][0]) || '',
+    budget: (responses['Budget'] && responses['Budget'][0]) || '',
+    message: (responses['Message'] && responses['Message'][0]) || 'Submitted via Google Form',
+    source: 'google_forms'
+  };
+
+  var options = {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  UrlFetchApp.fetch('${url}', options);
+}`
+}
+
 export default function IntegrationsPage() {
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<'catalog' | 'api' | 'webhook' | 'widget'>('catalog')
@@ -63,6 +88,12 @@ export default function IntegrationsPage() {
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({})
   const [testResult, setTestResult] = useState<{ success: boolean; message?: string; error?: string } | null>(null)
   const [isTesting, setIsTesting] = useState(false)
+
+  // Google Forms & Typeform modal helper states
+  const [formsSetupTab, setFormsSetupTab] = useState<'google' | 'typeform'>('google')
+  const [copiedScript, setCopiedScript] = useState(false)
+  const [copiedFormWebhook, setCopiedFormWebhook] = useState(false)
+  const [isSendingSampleLead, setIsSendingSampleLead] = useState(false)
 
   // One-time rotated key modal
   const [newlyRotatedKey, setNewlyRotatedKey] = useState<string | null>(null)
@@ -187,6 +218,9 @@ export default function IntegrationsPage() {
     // Pre-populate with existing masked credentials if any
     if (item.maskedCredentials) {
       Object.assign(initial, item.maskedCredentials)
+    }
+    if (item.provider === 'google_forms' && !initial.formName) {
+      initial.formName = 'Website Lead Qualification Form'
     }
     setFormCredentials(initial)
   }
@@ -836,33 +870,232 @@ print(response.json())`
                 </div>
               </div>
 
-              {/* Form Fields */}
-              <div className="space-y-3.5">
-                {activeModalProvider.requiredCredentials.map((field) => {
-                  const isSecret = field.isSecret
-                  const isVisible = showSecrets[field.key]
-
-                  return (
-                    <div key={field.key} className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-semibold text-foreground flex items-center gap-1">
-                          {field.label}
-                          <span className="text-rose-500 font-bold">*</span>
+              {/* Specialized Interactive Guide for Google Forms & Typeform */}
+              {activeModalProvider.provider === 'google_forms' ? (
+                <div className="space-y-4">
+                  {/* Lead Source Identification Settings */}
+                  <div className="p-3.5 rounded-xl bg-muted/40 border border-border/60 space-y-3">
+                    <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <Settings2 className="w-3.5 h-3.5 text-indigo-400" />
+                      Lead Source Tagging
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                          Form / Source Name <span className="text-rose-500">*</span>
                         </label>
-                        {isSecret && (
-                          <button
-                            type="button"
-                            onClick={() => setShowSecrets(prev => ({ ...prev, [field.key]: !prev[field.key] }))}
-                            className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 font-mono"
-                          >
-                            {isVisible ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                            {isVisible ? 'Hide' : 'Show'}
-                          </button>
-                        )}
+                        <Input
+                          placeholder="e.g. Website Discovery Audit Form"
+                          value={formCredentials.formName || ''}
+                          onChange={(e) => setFormCredentials(prev => ({ ...prev, formName: e.target.value }))}
+                          className="text-xs h-8 bg-background font-mono"
+                        />
+                        <p className="text-[10px] text-muted-foreground">Label shown in lead pipeline and activity logs.</p>
                       </div>
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-semibold text-foreground">
+                          Default Service Tag <span className="text-muted-foreground text-[10px] font-normal">(Optional)</span>
+                        </label>
+                        <Input
+                          placeholder="e.g. Performance Marketing / Consulting"
+                          value={formCredentials.defaultService || ''}
+                          onChange={(e) => setFormCredentials(prev => ({ ...prev, defaultService: e.target.value }))}
+                          className="text-xs h-8 bg-background font-mono"
+                        />
+                        <p className="text-[10px] text-muted-foreground">Pre-assigns service intent for AI follow-up prompts.</p>
+                      </div>
+                    </div>
+                  </div>
 
+                  {/* Dedicated Webhook Endpoint Box */}
+                  <div className="p-3.5 rounded-xl bg-background border border-border/80 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+                        <Activity className="w-3.5 h-3.5 text-emerald-500" />
+                        Your Inbound Webhook URL:
+                      </label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-[10px] text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10"
+                        onClick={() => handleCopyText(webhookUrl, setCopiedFormWebhook)}
+                      >
+                        {copiedFormWebhook ? <Check className="w-3 h-3 text-emerald-500 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                        {copiedFormWebhook ? 'Copied' : 'Copy URL'}
+                      </Button>
+                    </div>
+                    <div className="p-2 rounded-lg bg-muted/60 font-mono text-xs select-all break-all text-foreground border border-border/40">
+                      {webhookUrl}
+                    </div>
+                  </div>
+
+                  {/* Step-by-Step Platform Setup Tabs */}
+                  <div className="border border-border/70 rounded-xl overflow-hidden bg-card">
+                    <div className="flex border-b border-border/70 bg-muted/40 p-1 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setFormsSetupTab('google')}
+                        className={cn(
+                          "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5",
+                          formsSetupTab === 'google' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        <span>📋</span> Google Forms (Apps Script)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormsSetupTab('typeform')}
+                        className={cn(
+                          "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5",
+                          formsSetupTab === 'typeform' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        <span>⚡</span> Typeform Webhook
+                      </button>
+                    </div>
+
+                    <div className="p-3.5 space-y-3">
+                      {formsSetupTab === 'google' ? (
+                        <div className="space-y-2.5 text-xs leading-relaxed text-muted-foreground">
+                          <ol className="list-decimal list-inside space-y-1 text-foreground font-medium text-[11px]">
+                            <li>Open your Google Form &rarr; click <strong>3 dots menu (⋮)</strong> &rarr; select <strong>&lt;&gt; Script editor</strong>.</li>
+                            <li>Paste the code below into <code className="bg-muted px-1 py-0.5 rounded text-indigo-500 font-mono">Code.gs</code>.</li>
+                            <li>Click the <strong>Triggers</strong> icon (clock) &rarr; <strong>Add Trigger</strong> &rarr; Event type: <strong>On form submit</strong> &rarr; Save!</li>
+                          </ol>
+
+                          <div className="relative mt-2">
+                            <div className="flex items-center justify-between pb-1.5 text-[11px]">
+                              <span className="font-mono text-muted-foreground text-[10px]">Google Apps Script (Pre-configured):</span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2 text-[10px] bg-background"
+                                onClick={() => handleCopyText(getGoogleAppsScript(webhookUrl), setCopiedScript)}
+                              >
+                                {copiedScript ? <Check className="w-3 h-3 text-emerald-500 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                                {copiedScript ? 'Copied Script' : 'Copy Script Code'}
+                              </Button>
+                            </div>
+                            <pre className="p-2.5 rounded-lg bg-zinc-950 text-zinc-100 font-mono text-[10px] overflow-x-auto max-h-36 border border-zinc-800 leading-relaxed">
+                              {getGoogleAppsScript(webhookUrl)}
+                            </pre>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5 text-xs leading-relaxed text-muted-foreground">
+                          <ol className="list-decimal list-inside space-y-1 text-foreground font-medium text-[11px]">
+                            <li>In Typeform, open your form and click the <strong>Connect</strong> tab at the top.</li>
+                            <li>Select <strong>Webhooks</strong> &rarr; click <strong>Add a webhook</strong>.</li>
+                            <li>Paste your FollowUpOS Webhook URL above into the Endpoint URL field and click <strong>Save</strong>.</li>
+                            <li>Turn ON the <strong>Send test lead / Enabled</strong> toggle switch.</li>
+                          </ol>
+                          <div className="p-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[11px] text-indigo-950 dark:text-indigo-200">
+                            <strong>Automatic Enrichment:</strong> Full name, email, phone number, and answers from Typeform are automatically parsed and passed to your AI sales sequence!
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Send Live Sample Lead Action */}
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div>
+                      <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                        Test Inbound Lead Ingestion
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Send a simulation lead to verify that webhook ingestion and AI follow-up scheduling trigger immediately.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-8 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 whitespace-nowrap self-end sm:self-auto"
+                      disabled={isSendingSampleLead}
+                      onClick={async () => {
+                        setIsSendingSampleLead(true)
+                        try {
+                          await api.post(`/public/webhooks/leads/${developerConfig.webhookToken || 'demo_webhook_token'}`, {
+                            name: 'Rohan Sharma (Test Lead)',
+                            email: `rohan.test+${Date.now()}@example.com`,
+                            phone: '+91 98765 43210',
+                            company: 'Apex Digital Test',
+                            service: formCredentials.defaultService || 'Lead Qualification',
+                            message: 'Sample test submission from Google Forms & Typeform integration setup.',
+                            source: 'google_forms'
+                          })
+                          setTestResult({
+                            success: true,
+                            message: 'Test lead received! Successfully created and enrolled into your AI follow-up sequence.'
+                          })
+                        } catch (err: any) {
+                          setTestResult({
+                            success: false,
+                            error: err.response?.data?.error || err.message || 'Failed to trigger test lead.'
+                          })
+                        } finally {
+                          setIsSendingSampleLead(false)
+                        }
+                      }}
+                    >
+                      {isSendingSampleLead ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 mr-1.5 animate-spin" /> Sending...
+                        </>
+                      ) : (
+                        'Send Test Lead'
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                /* Standard Form Fields for Other Providers */
+                <div className="space-y-3.5">
+                  {activeModalProvider.requiredCredentials.map((field) => {
+                    const isSecret = field.isSecret
+                    const isVisible = showSecrets[field.key]
+
+                    return (
+                      <div key={field.key} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                            {field.label}
+                            <span className="text-rose-500 font-bold">*</span>
+                          </label>
+                          {isSecret && (
+                            <button
+                              type="button"
+                              onClick={() => setShowSecrets(prev => ({ ...prev, [field.key]: !prev[field.key] }))}
+                              className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 font-mono"
+                            >
+                              {isVisible ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                              {isVisible ? 'Hide' : 'Show'}
+                            </button>
+                          )}
+                        </div>
+
+                        <Input
+                          type={isSecret && !isVisible ? 'password' : 'text'}
+                          placeholder={field.placeholder}
+                          value={formCredentials[field.key] || ''}
+                          onChange={(e) => setFormCredentials(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          className="text-xs h-9 bg-background font-mono"
+                        />
+                        <p className="text-[10px] text-muted-foreground leading-tight">{field.helpText}</p>
+                      </div>
+                    )
+                  })}
+
+                  {activeModalProvider.optionalCredentials?.map((field) => (
+                    <div key={field.key} className="space-y-1 pt-1">
+                      <label className="text-xs font-semibold text-foreground">
+                        {field.label} <span className="text-muted-foreground text-[10px] font-normal">(Optional)</span>
+                      </label>
                       <Input
-                        type={isSecret && !isVisible ? 'password' : 'text'}
                         placeholder={field.placeholder}
                         value={formCredentials[field.key] || ''}
                         onChange={(e) => setFormCredentials(prev => ({ ...prev, [field.key]: e.target.value }))}
@@ -870,24 +1103,9 @@ print(response.json())`
                       />
                       <p className="text-[10px] text-muted-foreground leading-tight">{field.helpText}</p>
                     </div>
-                  )
-                })}
-
-                {activeModalProvider.optionalCredentials?.map((field) => (
-                  <div key={field.key} className="space-y-1 pt-1">
-                    <label className="text-xs font-semibold text-foreground">
-                      {field.label} <span className="text-muted-foreground text-[10px] font-normal">(Optional)</span>
-                    </label>
-                    <Input
-                      placeholder={field.placeholder}
-                      value={formCredentials[field.key] || ''}
-                      onChange={(e) => setFormCredentials(prev => ({ ...prev, [field.key]: e.target.value }))}
-                      className="text-xs h-9 bg-background font-mono"
-                    />
-                    <p className="text-[10px] text-muted-foreground leading-tight">{field.helpText}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               {/* Test Connection Result Alert */}
               {testResult && (

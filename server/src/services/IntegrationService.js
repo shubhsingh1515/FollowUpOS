@@ -112,8 +112,13 @@ export const INTEGRATION_CATALOG = [
     category: 'forms',
     icon: '📋',
     authType: 'webhook',
-    requiredCredentials: [],
-    optionalCredentials: [],
+    requiredCredentials: [
+      { key: 'formName', label: 'Form Name / Source Name', placeholder: 'e.g. Website Discovery Form', required: true, helpText: 'Identify which form this configuration represents in your leads list.' },
+    ],
+    optionalCredentials: [
+      { key: 'defaultService', label: 'Default Service / Tag', placeholder: 'e.g. Performance Marketing', required: false, helpText: 'Auto-tag leads from this form with a specific service offering.' },
+      { key: 'webhookSecret', label: 'Webhook Secret Token (Optional)', placeholder: 'whsec_••••••••', required: false, isSecret: true, helpText: 'Optional secret to verify incoming webhook payloads.' },
+    ],
     documentationUrl: 'https://followupos.com/docs/integrations/google-forms',
   },
 ];
@@ -283,6 +288,20 @@ export class IntegrationService {
             accountIdentifier: `Meta Page ID: ${pageId}`,
             lastVerifiedAt: new Date(),
             message: 'Meta Lead Ads configuration validated.',
+          };
+        }
+
+        case 'google_forms': {
+          const { formName } = credentials;
+          if (!formName) {
+            throw new Error('Form Name / Source Name is required to identify this form.');
+          }
+
+          return {
+            success: true,
+            accountIdentifier: formName,
+            lastVerifiedAt: new Date(),
+            message: `Google Forms & Typeform verified for "${formName}". Ready to receive inbound leads.`,
           };
         }
 
