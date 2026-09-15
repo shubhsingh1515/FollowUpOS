@@ -168,11 +168,11 @@ export default function LoginPage() {
 
           {/* Divider */}
           <div className="relative flex items-center justify-center">
-            <div className="border-t border-white/10 w-full" />
-            <span className="bg-slate-900 px-3 text-xs text-slate-500 uppercase tracking-wider font-mono">
+            <div className="border-t border-white/10 " />
+            <div className="bg-slate-900 px-3 text-xs text-slate-500 uppercase  font-mono">
               or sign in with email
-            </span>
-            <div className="border-t border-white/10 w-full" />
+            </div>
+            <div className="border-t border-white/10 " />
           </div>
 
           {/* Email / Password Form */}
@@ -230,7 +230,7 @@ export default function LoginPage() {
           </form>
 
           {/* Quick-fill helper for test accounts */}
-          <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between">
+          {/* <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between">
             <div className="text-xs text-slate-400">
               <span className="font-medium text-slate-300">Demo Fill:</span> shubham@gmail.com
             </div>
@@ -241,7 +241,7 @@ export default function LoginPage() {
             >
               Auto-Fill
             </button>
-          </div>
+          </div> */}
 
           <div className="text-center text-sm text-slate-400">
             Don't have an account?{' '}

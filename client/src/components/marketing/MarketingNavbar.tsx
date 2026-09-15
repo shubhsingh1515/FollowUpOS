@@ -119,7 +119,7 @@ export default function MarketingNavbar() {
               <Link to="/register">
                 <Button
                   size="sm"
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold h-8.5 rounded-full px-4 shadow-md shadow-indigo-600/30 gap-1.5 transition-all hover:scale-[1.02]"
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold h-8.5 rounded-full px-4 py-2 shadow-md shadow-indigo-600/30 gap-1.5 transition-all hover:scale-[1.02]"
                 >
                   Start Free <ArrowRight className="w-3.5 h-3.5" />
                 </Button>

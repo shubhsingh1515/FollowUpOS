@@ -65,7 +65,8 @@ export default function IntegrationsShowcasePage() {
   const [copiedWebhook, setCopiedWebhook] = useState(false)
   const [testSuccess, setTestSuccess] = useState(false)
 
-  const webhookEndpoint = 'http://localhost:5000/api/public/webhook/lead'
+  const backendBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')
+  const webhookEndpoint = `${backendBase}/api/public/webhook/lead`
 
   const handleCopy = () => {
     navigator.clipboard.writeText(webhookEndpoint)
