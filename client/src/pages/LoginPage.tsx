@@ -61,7 +61,8 @@ export default function LoginPage() {
   const handleGoogleLogin = () => {
     setIsGoogleLoading(true)
     const backendBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')
-    window.location.href = `${backendBase}/api/auth/google`
+    const clientOrigin = window.location.origin
+    window.location.href = `${backendBase}/api/auth/google?clientUrl=${encodeURIComponent(clientOrigin)}`
   }
 
   const handleDemoLogin = () => {

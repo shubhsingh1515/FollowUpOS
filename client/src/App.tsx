@@ -67,6 +67,15 @@ function PublicAuthRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const hasAuthToken = Boolean(searchParams.get('token'))
+
+  // Fallback: If redirected to root or login with an auth token, resolve session immediately
+  if (hasAuthToken && (location.pathname === '/' || location.pathname === '/login')) {
+    return <GoogleCallbackPage />
+  }
+
   return (
     <Routes>
       {/* Public Marketing Landing & Feature Pages */}

@@ -33,6 +33,7 @@ const forgotPasswordLimiter = rateLimit({
 // Google OAuth 2.0 / OpenID Connect Routes
 router.get('/google', authController.googleAuth);
 router.get('/google/callback', authController.googleCallback);
+router.get('/callback', authController.fallbackClientCallback);
 router.post('/google/token', authController.googleToken);
 
 // Core Authentication

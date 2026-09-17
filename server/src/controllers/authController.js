@@ -85,7 +85,20 @@ export const authController = {
 
   async googleAuth(req, res) {
     try {
-      const state = req.query.state || 'google_auth';
+      let clientOrigin = req.query.clientUrl || '';
+      if (!clientOrigin && req.headers.referer) {
+        try {
+          clientOrigin = new URL(req.headers.referer).origin;
+        } catch {}
+      }
+
+      let state = req.query.state || 'google_auth';
+      if (clientOrigin) {
+        try {
+          state = Buffer.from(JSON.stringify({ s: state, origin: clientOrigin })).toString('base64url');
+        } catch {}
+      }
+
       const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
       const host = req.headers['x-forwarded-host'] || req.get('host');
       const incomingCallback = host ? `${protocol}://${host}${req.baseUrl}/google/callback` : null;
@@ -105,7 +118,33 @@ export const authController = {
 
   async googleCallback(req, res) {
     const { code, state, error } = req.query;
-    const clientBase = (config.client.url || 'http://localhost:5173').replace(/\/+$/, '');
+
+    let clientBase = '';
+    let resolvedState = state;
+
+    if (state && state !== 'google_auth') {
+      try {
+        const decoded = JSON.parse(Buffer.from(state, 'base64url').toString('utf8'));
+        if (decoded?.origin) {
+          clientBase = decoded.origin;
+          resolvedState = decoded.s || 'google_auth';
+        }
+      } catch {}
+    }
+
+    if (!clientBase && config.client.url) {
+      clientBase = config.client.url;
+    }
+
+    const host = req.headers['x-forwarded-host'] || req.get('host');
+    if (host && clientBase.includes(host)) {
+      logger.warn(`CLIENT_URL points to backend host (${host}). Falling back to frontend default.`);
+      clientBase = process.env.APP_URL && !process.env.APP_URL.includes(host)
+        ? process.env.APP_URL
+        : 'http://localhost:5173';
+    }
+
+    clientBase = (clientBase || 'http://localhost:5173').replace(/\/+$/, '');
 
     if (error) {
       logger.warn('Google OAuth cancelled or returned error:', error);
@@ -118,11 +157,10 @@ export const authController = {
 
     try {
       const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-      const host = req.headers['x-forwarded-host'] || req.get('host');
       const incomingCallback = host ? `${protocol}://${host}${req.baseUrl}${req.path}` : null;
       const redirectUri = config.google.callbackUrl || incomingCallback;
 
-      const result = await authService.handleGoogleCallback({ code, state, redirectUri });
+      const result = await authService.handleGoogleCallback({ code, state: resolvedState, redirectUri });
 
       res.cookie('refreshToken', result.refreshToken, {
         httpOnly: true,
@@ -139,6 +177,59 @@ export const authController = {
       const errorMsg = err.message || 'Google sign-in failed. Please try again.';
       res.redirect(`${clientBase}/login?error=${encodeURIComponent(errorMsg)}`);
     }
+  },
+
+  fallbackClientCallback(req, res) {
+    const { token, isNew, error } = req.query;
+    let clientBase = (config.client.url || 'http://localhost:5173').replace(/\/+$/, '');
+    const host = req.headers['x-forwarded-host'] || req.get('host');
+
+    if (!host || !clientBase.includes(host)) {
+      const target = `${clientBase}/auth/callback?token=${encodeURIComponent(token || '')}&isNew=${isNew === 'true' ? 'true' : 'false'}${error ? `&error=${encodeURIComponent(error)}` : ''}`;
+      return res.redirect(target);
+    }
+
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>FollowUpOS — Completing Sign-in</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #08090C; color: #E4E4E7; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
+          .card { background: #0E1118; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 32px; max-width: 480px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+          h2 { color: #FFFFFF; margin-top: 0; font-size: 20px; font-weight: 700; }
+          p { font-size: 13px; color: #A1A1AA; line-height: 1.6; }
+          .btn { display: inline-block; background: #6366F1; color: #FFFFFF; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 13px; margin: 16px 0; transition: background 0.2s; }
+          .btn:hover { background: #4F46E5; }
+          .hint { font-size: 11px; color: #71717A; margin-top: 20px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 16px; }
+          code { color: #818CF8; background: rgba(99,102,241,0.1); padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h2>✓ Google Sign-in Successful</h2>
+          <p>Your session token has been generated. Click below to open your FollowUpOS dashboard:</p>
+          <a id="target-link" class="btn" href="http://localhost:5173/auth/callback?token=${encodeURIComponent(token || '')}&isNew=${isNew || 'false'}">
+            Continue to FollowUpOS &rarr;
+          </a>
+          <div class="hint">
+            <strong>Configuration Tip:</strong> In your Render dashboard environment variables, set <code>CLIENT_URL</code> to your frontend app domain (e.g. <code>http://localhost:5173</code> or your deployed frontend domain) instead of the backend API URL.
+          </div>
+        </div>
+        <script>
+          const token = ${JSON.stringify(token || '')};
+          const isNew = ${JSON.stringify(isNew || 'false')};
+          const defaultFrontend = 'http://localhost:5173/auth/callback?token=' + encodeURIComponent(token) + '&isNew=' + isNew;
+          document.getElementById('target-link').href = defaultFrontend;
+          setTimeout(() => {
+            window.location.href = defaultFrontend;
+          }, 1200);
+        </script>
+      </body>
+      </html>
+    `);
   },
 
   async googleToken(req, res) {
