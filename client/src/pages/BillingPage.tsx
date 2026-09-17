@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useAuthStore } from '@/store/authStore'
+import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import { cn } from '@/lib/utils'
 import api from '@/lib/api'
 
@@ -506,29 +507,16 @@ export default function BillingPage() {
       )}
 
       {/* Cancel Confirmation Modal */}
-      {showCancelModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0D0F14] border border-white/[0.08] rounded-2xl max-w-md w-full p-6 space-y-4 text-white shadow-2xl">
-            <div className="space-y-1">
-              <h3 className="text-base font-bold text-rose-400 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" /> Cancel Subscription?
-              </h3>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Your workspace will remain fully active until the end of your current paid billing period. Your customer data, leads, and follow-up templates will not be deleted.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <Button variant="ghost" size="sm" onClick={() => setShowCancelModal(false)} className="text-xs">
-                Keep Subscription
-              </Button>
-              <Button variant="destructive" size="sm" onClick={handleCancelSubscription} className="text-xs">
-                Confirm Cancellation
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleCancelSubscription}
+        title="Cancel Subscription?"
+        description="Your workspace will remain fully active until the end of your current paid billing period. Your customer data, leads, and follow-up templates will not be deleted."
+        confirmText="Confirm Cancellation"
+        cancelText="Keep Subscription"
+        variant="danger"
+      />
     </div>
   )
 }

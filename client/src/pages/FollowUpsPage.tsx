@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Calendar, CheckCircle2, XCircle, Clock, Wand2, Loader2 } from 'lucide-react'
@@ -8,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/primitives'
 import { temperatureLabel, getInitials, timeAgo, cn } from '@/lib/utils'
+import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import api from '@/lib/api'
 
 function FollowUpCard({ task, onComplete, onCancel, onGenerate }: {
@@ -101,6 +103,7 @@ function FollowUpCard({ task, onComplete, onCancel, onGenerate }: {
 
 export default function FollowUpsPage() {
   const queryClient = useQueryClient()
+  const [taskToCancel, setTaskToCancel] = useState<string | null>(null)
 
   const { data: todayTasks, isLoading: todayLoading } = useQuery({
     queryKey: ['followups', 'today'],
@@ -193,7 +196,7 @@ export default function FollowUpsPage() {
                   key={task._id}
                   task={task}
                   onComplete={(id) => completeMutation.mutate(id)}
-                  onCancel={(id) => cancelMutation.mutate(id)}
+                  onCancel={(id) => setTaskToCancel(id)}
                   onGenerate={(id) => generateMutation.mutate(id)}
                 />
               ))}
@@ -214,7 +217,7 @@ export default function FollowUpsPage() {
                   key={task._id}
                   task={task}
                   onComplete={(id) => completeMutation.mutate(id)}
-                  onCancel={(id) => cancelMutation.mutate(id)}
+                  onCancel={(id) => setTaskToCancel(id)}
                   onGenerate={(id) => generateMutation.mutate(id)}
                 />
               ))}
@@ -235,7 +238,7 @@ export default function FollowUpsPage() {
                   key={task._id}
                   task={task}
                   onComplete={(id) => completeMutation.mutate(id)}
-                  onCancel={(id) => cancelMutation.mutate(id)}
+                  onCancel={(id) => setTaskToCancel(id)}
                   onGenerate={(id) => generateMutation.mutate(id)}
                 />
               ))}
@@ -243,6 +246,24 @@ export default function FollowUpsPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Cancel Follow-up Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={Boolean(taskToCancel)}
+        onClose={() => setTaskToCancel(null)}
+        onConfirm={async () => {
+          if (taskToCancel) {
+            await cancelMutation.mutateAsync(taskToCancel)
+            setTaskToCancel(null)
+          }
+        }}
+        title="Cancel Follow-up Task"
+        description="Are you sure you want to cancel this scheduled follow-up? It will be marked as cancelled and removed from your queue."
+        confirmText="Yes, Cancel Follow-up"
+        cancelText="Keep Scheduled"
+        variant="warning"
+        isLoading={cancelMutation.isPending}
+      />
     </div>
   )
 }

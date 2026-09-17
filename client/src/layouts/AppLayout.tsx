@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { getInitials, cn } from '@/lib/utils'
 import { useTheme } from '@/lib/theme'
 import CommandPalette from '@/components/CommandPalette'
+import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import api from '@/lib/api'
 
 interface NavGroup {
@@ -72,12 +73,15 @@ const navGroups: NavGroup[] = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const { user, organization, logout } = useAuthStore()
   const { theme, setTheme, isDark } = useTheme()
   const navigate = useNavigate()
   const location = useLocation()
 
   const handleLogout = async () => {
+    setIsLoggingOut(true)
     try {
       await api.post('/auth/logout')
     } catch {}
@@ -191,7 +195,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              handleLogout()
+              setShowLogoutConfirm(true)
             }}
             id="sidebar-logout-btn"
             className="p-2 rounded-lg hover:bg-red-500/10 hover:text-red-500 text-muted-foreground transition-all cursor-pointer z-10 shrink-0"
@@ -297,7 +301,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleLogout}
+              onClick={() => setShowLogoutConfirm(true)}
               id="header-logout-btn"
               className="h-8 px-2.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5 ml-1"
               title="Sign Out"
@@ -318,6 +322,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <CommandPalette
         open={commandPaletteOpen}
         onOpenChange={setCommandPaletteOpen}
+      />
+
+      {/* Sign Out Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+        title="Sign Out of FollowUpOS"
+        description="Are you sure you want to sign out? You will need to log back in to access your sales cockpit and active pipeline."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="danger"
+        icon={<LogOut className="w-5 h-5 text-red-500" />}
+        isLoading={isLoggingOut}
       />
     </div>
   )

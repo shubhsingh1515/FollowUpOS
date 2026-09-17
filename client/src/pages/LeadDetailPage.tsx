@@ -5,8 +5,9 @@ import {
   ArrowLeft, Sparkles, Send, RotateCcw, MessageSquare,
   Phone, Mail, Globe, Building, Tag, ChevronDown, ChevronRight,
   Flame, Calendar, Star, TrendingUp, CheckCircle2, Edit,
-  Loader2, Clock, Wand2, ThumbsUp, ShieldAlert, X, AlertCircle, Info,
+  Loader2, Clock, Wand2, ThumbsUp, ShieldAlert, X, AlertCircle, Info, Archive,
 } from 'lucide-react'
+import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -61,6 +62,15 @@ export default function LeadDetailPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [activeStage, setActiveStage] = useState('')
   const [showScoreModal, setShowScoreModal] = useState(false)
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
+
+  const archiveMutation = useMutation({
+    mutationFn: () => api.delete(`/leads/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+      navigate('/leads')
+    },
+  })
 
   const { data: leadData, isLoading } = useQuery<any>({
     queryKey: ['lead', id],
@@ -183,24 +193,37 @@ export default function LeadDetailPage() {
             </span>
           </div>
         </div>
-        {/* Stage Selector */}
-        <div className="flex items-center gap-1 flex-wrap">
-          {STAGES.map((s) => (
-            <button
-              key={s}
-              onClick={() => stageMutation.mutate(s)}
-              className={cn(
-                'text-xs px-3 py-1 rounded-full font-medium transition-all border',
-                activeStage === s
-                  ? s === 'won' ? 'bg-green-100 text-green-700 border-green-300'
-                    : s === 'lost' ? 'bg-red-100 text-red-700 border-red-300'
-                    : 'bg-primary text-primary-foreground border-primary'
-                  : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground'
-              )}
-            >
-              {stageLabel(s)}
-            </button>
-          ))}
+        {/* Stage Selector & Actions */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 flex-wrap">
+            {STAGES.map((s) => (
+              <button
+                key={s}
+                onClick={() => stageMutation.mutate(s)}
+                className={cn(
+                  'text-xs px-3 py-1 rounded-full font-medium transition-all border',
+                  activeStage === s
+                    ? s === 'won' ? 'bg-green-100 text-green-700 border-green-300'
+                      : s === 'lost' ? 'bg-red-100 text-red-700 border-red-300'
+                      : 'bg-primary text-primary-foreground border-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                )}
+              >
+                {stageLabel(s)}
+              </button>
+            ))}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowArchiveConfirm(true)}
+            className="h-8 text-xs text-muted-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/10 gap-1.5 ml-1"
+            title="Archive Lead"
+          >
+            <Archive className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Archive</span>
+          </Button>
         </div>
       </div>
 
@@ -638,6 +661,22 @@ export default function LeadDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Archive Lead Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showArchiveConfirm}
+        onClose={() => setShowArchiveConfirm(false)}
+        onConfirm={async () => {
+          await archiveMutation.mutateAsync()
+          setShowArchiveConfirm(false)
+        }}
+        title="Archive Lead"
+        description={`Are you sure you want to archive ${contact?.fullName || 'this lead'}? It will be removed from your active sales pipeline.`}
+        confirmText="Archive Lead"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={archiveMutation.isPending}
+      />
     </div>
   )
 }

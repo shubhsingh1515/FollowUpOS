@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import api from '@/lib/api'
 
 export function AdminOrganizationsPage() {
@@ -22,6 +23,8 @@ export function AdminOrganizationsPage() {
   const [loading, setLoading] = useState(true)
   const [selectedOrg, setSelectedOrg] = useState<any | null>(null)
   const [actionMessage, setActionMessage] = useState('')
+  const [impersonateTarget, setImpersonateTarget] = useState<any | null>(null)
+  const [isImpersonating, setIsImpersonating] = useState(false)
 
   useEffect(() => {
     fetchOrganizations()
@@ -91,14 +94,12 @@ export function AdminOrganizationsPage() {
     }
   }
 
-  const handleImpersonate = async (owner: any) => {
-    if (!owner) return
-    const confirm = window.confirm(`Generate secure temporary impersonation session for ${owner.email}? This action is logged in immutable audit records.`)
-    if (!confirm) return
-
+  const handleConfirmImpersonate = async () => {
+    if (!impersonateTarget) return
+    setIsImpersonating(true)
     try {
       const res = await api.post('/admin/impersonate', {
-        targetUserId: owner._id,
+        targetUserId: impersonateTarget._id,
         reason: 'Super Admin support session'
       })
       if (res.data?.accessToken) {
@@ -108,6 +109,9 @@ export function AdminOrganizationsPage() {
     } catch {
       alert('Impersonation session granted in demo mode.')
       window.location.href = '/today'
+    } finally {
+      setIsImpersonating(false)
+      setImpersonateTarget(null)
     }
   }
 
@@ -200,7 +204,7 @@ export function AdminOrganizationsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleImpersonate(org.owner)}
+                          onClick={() => setImpersonateTarget(org.owner)}
                           className="h-7 text-[10px] px-2.5 border-white/10 text-indigo-300 hover:bg-indigo-600/20 gap-1 font-semibold"
                         >
                           <LogIn className="w-3 h-3" /> Impersonate
@@ -232,6 +236,20 @@ export function AdminOrganizationsPage() {
           </table>
         </div>
       </div>
+
+      {/* Impersonation Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={Boolean(impersonateTarget)}
+        onClose={() => setImpersonateTarget(null)}
+        onConfirm={handleConfirmImpersonate}
+        title="Start Impersonation Session"
+        description={`Generate a secure temporary impersonation session for ${impersonateTarget?.email}? This action is logged in immutable audit records.`}
+        confirmText="Start Session"
+        cancelText="Cancel"
+        variant="warning"
+        icon={<UserCheck className="w-5 h-5 text-amber-500" />}
+        isLoading={isImpersonating}
+      />
     </div>
   )
 }

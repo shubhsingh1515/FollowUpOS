@@ -104,7 +104,7 @@ export default function MarketingNavbar() {
         <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
             <Link to="/today">
-              <Button size="sm" className="bg-white text-black hover:bg-zinc-200 text-xs font-semibold h-8.5 rounded-full px-4 gap-1.5">
+              <Button size="sm" className="bg-white text-black hover:bg-zinc-200 text-xs font-semibold h-8.5 rounded-full px-4 py-2 gap-1.5">
                 Go to Workspace <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
@@ -173,7 +173,7 @@ export default function MarketingNavbar() {
           <div className="pt-3 border-t border-white/[0.08] flex flex-col gap-2">
             {isAuthenticated ? (
               <Link to="/today">
-                <Button className="w-full bg-white text-black hover:bg-zinc-200 text-xs font-semibold h-9 rounded-xl">
+                <Button className="w-full bg-white text-black hover:bg-zinc-200 text-xs font-semibold h-9 py-2 rounded-xl">
                   Go to Workspace
                 </Button>
               </Link>

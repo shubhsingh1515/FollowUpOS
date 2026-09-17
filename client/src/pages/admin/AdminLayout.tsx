@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import api from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
 
@@ -24,6 +25,17 @@ export function AdminLayout() {
   const navigate = useNavigate()
   const [adminUser, setAdminUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleAdminLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await api.post('/auth/logout')
+    } catch {}
+    useAuthStore.getState().logout()
+    window.location.href = '/login'
+  }
 
   useEffect(() => {
     async function checkAdminAuth() {
@@ -124,12 +136,9 @@ export function AdminLayout() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={async () => {
-                try { await api.post('/auth/logout') } catch {}
-                useAuthStore.getState().logout()
-                window.location.href = '/login'
-              }}
+              onClick={() => setShowLogoutConfirm(true)}
               className="text-[11px] h-7 px-2 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10"
+              title="Sign Out"
             >
               <LogOut className="w-3.5 h-3.5" />
             </Button>
@@ -160,6 +169,19 @@ export function AdminLayout() {
           <Outlet />
         </div>
       </main>
+
+      <ConfirmationModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleAdminLogout}
+        title="Sign Out of Super Admin"
+        description="Are you sure you want to end your Super Admin session? You will be logged out of platform administrative controls."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="danger"
+        icon={<LogOut className="w-5 h-5 text-rose-500" />}
+        isLoading={isLoggingOut}
+      />
     </div>
   )
 }

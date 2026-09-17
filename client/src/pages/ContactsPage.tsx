@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Search, Plus, Mail, Phone, Building, X, Loader2, Sparkles } from 'lucide-react'
+import { Search, Plus, Mail, Phone, Building, X, Loader2, Sparkles, Trash2 } from 'lucide-react'
+import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,11 +9,13 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { getInitials, cn } from '@/lib/utils'
 import api from '@/lib/api'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 export default function ContactsPage() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [contactToDelete, setContactToDelete] = useState<any | null>(null)
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -50,6 +52,14 @@ export default function ContactsPage() {
     },
     onError: (err: any) => {
       setError(err.response?.data?.message || 'Failed to add contact. Please check details.')
+    },
+  })
+
+  const deleteContactMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/contacts/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] })
+      setContactToDelete(null)
     },
   })
 
@@ -235,13 +245,39 @@ export default function ContactsPage() {
                     </div>
                   )}
                 </div>
-                <Badge variant="secondary" className="text-[10px] shrink-0">
-                  {contact.leadCount || 0} leads
-                </Badge>
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <Badge variant="secondary" className="text-[10px]">
+                    {contact.leadCount || 0} leads
+                  </Badge>
+                  <button
+                    onClick={() => setContactToDelete(contact)}
+                    className="p-1 rounded text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    title="Delete Contact"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </Card>
           ))}
       </div>
+
+      {/* Delete Contact Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={Boolean(contactToDelete)}
+        onClose={() => setContactToDelete(null)}
+        onConfirm={async () => {
+          if (contactToDelete) {
+            await deleteContactMutation.mutateAsync(contactToDelete._id)
+          }
+        }}
+        title="Delete Contact"
+        description={`Are you sure you want to delete ${contactToDelete?.fullName || 'this contact'}? This will remove their record from your contacts directory.`}
+        confirmText="Delete Contact"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={deleteContactMutation.isPending}
+      />
     </div>
   )
 }
