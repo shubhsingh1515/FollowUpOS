@@ -86,7 +86,12 @@ export const authController = {
   async googleAuth(req, res) {
     try {
       const state = req.query.state || 'google_auth';
-      const authUrl = authService.getGoogleAuthUrl(state);
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const host = req.headers['x-forwarded-host'] || req.get('host');
+      const incomingCallback = host ? `${protocol}://${host}${req.baseUrl}/google/callback` : null;
+      const redirectUri = config.google.callbackUrl || incomingCallback;
+
+      const authUrl = authService.getGoogleAuthUrl(state, redirectUri);
       res.redirect(authUrl);
     } catch (err) {
       logger.error('Failed to initiate Google OAuth:', err);
@@ -100,18 +105,24 @@ export const authController = {
 
   async googleCallback(req, res) {
     const { code, state, error } = req.query;
+    const clientBase = (config.client.url || 'http://localhost:5173').replace(/\/+$/, '');
 
     if (error) {
       logger.warn('Google OAuth cancelled or returned error:', error);
-      return res.redirect(`${config.client.url}/login?error=${encodeURIComponent('Google sign-in was cancelled.')}`);
+      return res.redirect(`${clientBase}/login?error=${encodeURIComponent('Google sign-in was cancelled.')}`);
     }
 
     if (!code) {
-      return res.redirect(`${config.client.url}/login?error=${encodeURIComponent('Missing authorization code from Google.')}`);
+      return res.redirect(`${clientBase}/login?error=${encodeURIComponent('Missing authorization code from Google.')}`);
     }
 
     try {
-      const result = await authService.handleGoogleCallback({ code, state });
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const host = req.headers['x-forwarded-host'] || req.get('host');
+      const incomingCallback = host ? `${protocol}://${host}${req.baseUrl}${req.path}` : null;
+      const redirectUri = config.google.callbackUrl || incomingCallback;
+
+      const result = await authService.handleGoogleCallback({ code, state, redirectUri });
 
       res.cookie('refreshToken', result.refreshToken, {
         httpOnly: true,
@@ -121,12 +132,12 @@ export const authController = {
       });
 
       // Redirect to frontend callback handler with access token
-      const redirectTarget = `${config.client.url}/auth/callback?token=${encodeURIComponent(result.accessToken)}&isNew=${result.isNewUser ? 'true' : 'false'}`;
+      const redirectTarget = `${clientBase}/auth/callback?token=${encodeURIComponent(result.accessToken)}&isNew=${result.isNewUser ? 'true' : 'false'}`;
       res.redirect(redirectTarget);
     } catch (err) {
       logger.error('Google OAuth callback failed:', err);
       const errorMsg = err.message || 'Google sign-in failed. Please try again.';
-      res.redirect(`${config.client.url}/login?error=${encodeURIComponent(errorMsg)}`);
+      res.redirect(`${clientBase}/login?error=${encodeURIComponent(errorMsg)}`);
     }
   },
 

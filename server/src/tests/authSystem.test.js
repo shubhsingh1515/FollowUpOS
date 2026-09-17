@@ -244,4 +244,16 @@ describe('FollowUpOS Production Authentication & Verification Suite', () => {
     expect(authUrl).toContain('scope=openid+email+profile');
     expect(authUrl).toContain('state=test_state_123');
   });
+
+  test('11. /auth/google/callback route is mounted and handles callbacks', async () => {
+    const res = await request(app).get('/auth/google/callback');
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toContain('error=');
+  });
+
+  test('12. /api/auth/google/callback route is mounted and handles callbacks', async () => {
+    const res = await request(app).get('/api/auth/google/callback');
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toContain('error=');
+  });
 });

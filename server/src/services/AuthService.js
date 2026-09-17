@@ -410,15 +410,17 @@ export class AuthService {
     return { success: true, message: 'Password has been reset successfully. Please sign in.' };
   }
 
-  getGoogleAuthUrl(state = 'followupos_google_oauth') {
+  getGoogleAuthUrl(state = 'followupos_google_oauth', redirectUri) {
     if (!config.google.clientId) {
       throw new AppError('Google OAuth is not configured on this server. Missing GOOGLE_CLIENT_ID.', 500, 'GOOGLE_CONFIG_MISSING');
     }
 
+    const callbackUrl = redirectUri || config.google.callbackUrl;
+
     const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
     const params = new URLSearchParams({
       client_id: config.google.clientId,
-      redirect_uri: config.google.callbackUrl,
+      redirect_uri: callbackUrl,
       response_type: 'code',
       scope: 'openid email profile',
       access_type: 'offline',
@@ -429,7 +431,7 @@ export class AuthService {
     return `${rootUrl}?${params.toString()}`;
   }
 
-  async handleGoogleCallback({ code, state }) {
+  async handleGoogleCallback({ code, state, redirectUri }) {
     if (!code) {
       throw new AppError('Missing Google authorization code', 400, 'MISSING_AUTH_CODE');
     }
@@ -438,24 +440,47 @@ export class AuthService {
       throw new AppError('Google OAuth credentials not configured on server', 500, 'GOOGLE_CONFIG_MISSING');
     }
 
+    const callbackUrl = redirectUri || config.google.callbackUrl;
+
     // Exchange auth code with Google token endpoint
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+    let tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         code,
         client_id: config.google.clientId,
         client_secret: config.google.clientSecret,
-        redirect_uri: config.google.callbackUrl,
+        redirect_uri: callbackUrl,
         grant_type: 'authorization_code',
       }),
     });
 
-    const tokenData = await tokenResponse.json();
+    let tokenData = await tokenResponse.json();
+
+    // If exchange fails and config.google.callbackUrl is different from callbackUrl, attempt fallback
+    if ((!tokenResponse.ok || tokenData.error) && config.google.callbackUrl && config.google.callbackUrl !== callbackUrl) {
+      logger.warn(`Google token exchange initial attempt with ${callbackUrl} failed; attempting fallback with ${config.google.callbackUrl}`);
+      const fallbackResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: config.google.clientId,
+          client_secret: config.google.clientSecret,
+          redirect_uri: config.google.callbackUrl,
+          grant_type: 'authorization_code',
+        }),
+      });
+      const fallbackData = await fallbackResponse.json();
+      if (fallbackResponse.ok && !fallbackData.error) {
+        tokenResponse = fallbackResponse;
+        tokenData = fallbackData;
+      }
+    }
 
     if (!tokenResponse.ok || tokenData.error) {
       logger.error('Google token exchange error:', tokenData);
-      throw new AppError(tokenData.error_description || 'Failed to exchange authorization code with Google', 401, 'GOOGLE_AUTH_FAILED');
+      throw new AppError(tokenData.error_description || tokenData.error || 'Failed to exchange authorization code with Google', 401, 'GOOGLE_AUTH_FAILED');
     }
 
     // Fetch verified identity from Google UserInfo

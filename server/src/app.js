@@ -100,6 +100,7 @@ app.use('/api/webhooks', webhookRoutes);
 
 // Rate-limited Authenticated API routes
 app.use('/api', apiLimiter);
+app.use('/auth', authLimiter, authRoutes);
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/admin', adminRoutes);
