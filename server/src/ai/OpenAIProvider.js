@@ -143,6 +143,15 @@ export class OpenAIProvider extends AIProvider {
 
     return content.trim();
   }
+
+  async generateText(prompt, options = {}) {
+    const { content } = await this._chat(
+      'You are a helpful AI sales assistant.',
+      prompt,
+      { temperature: options.temperature ?? 0.7, maxTokens: options.maxTokens ?? 400 }
+    );
+    return content.trim();
+  }
 }
 
 export default OpenAIProvider;

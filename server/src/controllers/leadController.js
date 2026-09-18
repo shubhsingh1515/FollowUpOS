@@ -5,6 +5,9 @@ import { Organization } from '../models/Organization.js';
 import { getAIProvider } from '../ai/index.js';
 import { Conversation } from '../models/Conversation.js';
 import { Message } from '../models/Message.js';
+import { AIAnalysis } from '../models/AIAnalysis.js';
+import { Deal } from '../models/Deal.js';
+import { Activity } from '../models/Activity.js';
 
 export const leadController = {
   async list(req, res) {
@@ -48,9 +51,9 @@ export const leadController = {
   },
 
   async checkDuplicate(req, res) {
-    const { email, phone } = req.body;
-    const isDuplicate = await leadService.checkDuplicate(req.organizationId, { email, phone });
-    res.json({ success: true, data: { isDuplicate: !!isDuplicate } });
+    const { email, phone, name } = req.body;
+    const existing = await leadService.checkDuplicate(req.organizationId, { email, phone, name });
+    res.json({ success: true, data: existing });
   },
 
   async update(req, res) {
@@ -132,13 +135,11 @@ export const leadController = {
     res.json({ success: true, data: { lead } });
   },
 
+  /**
+   * GET /api/leads/priorities
+   * Today's priority leads — calculated from real data.
+   */
   async getTodaysPriorities(req, res) {
-    import('mongoose');
-    const mongoose = (await import('mongoose')).default;
-    if (mongoose.connection.readyState !== 1) {
-      const { mockTodayData } = await import('../services/mockData.js');
-      return res.json({ success: true, data: { leads: mockTodayData.priorityActions, todayData: mockTodayData } });
-    }
     const leads = await leadService.getTodaysPriorities(
       req.organizationId,
       req.user._id
@@ -146,7 +147,30 @@ export const leadController = {
 
     const hotCount = leads.filter(l => l.leadTemperature === 'hot').length;
     const urgentTasks = leads.filter(l => l.isOverdue || l.leadTemperature === 'hot');
-    const revenueAtRisk = leads.reduce((acc, l) => acc + (l.estimatedValue || 0), 0);
+    const revenueAtRisk = leads
+      .filter(l => l.isOverdue || (l.lastContactAt == null))
+      .reduce((acc, l) => acc + (l.estimatedValue || 0), 0);
+
+    // Real meeting count from today's activities
+    const now = new Date();
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const meetingsToday = await Activity.countDocuments({
+      organizationId: req.organizationId,
+      type: 'meeting_booked',
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    // Real closed deals count for current month
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const closedDealsMonth = await Deal.countDocuments({
+      organizationId: req.organizationId,
+      stage: 'won',
+      wonAt: { $gte: startOfMonth },
+    });
 
     const priorityActions = leads.slice(0, 6).map((l) => ({
       id: `act-${l._id}`,
@@ -154,69 +178,165 @@ export const leadController = {
       name: l.contactId?.fullName || l.title || 'Inbound Prospect',
       company: l.contactId?.company || 'Prospective Client',
       channel: l.source === 'whatsapp' ? 'whatsapp' : l.source === 'instagram' ? 'instagram' : 'email',
-      score: l.leadScore || 70,
-      priorityScore: Math.min(99, (l.leadScore || 70) + (l.isOverdue ? 10 : 5)),
-      type: l.isOverdue ? 'followup_due' : 'reply_urgent',
-      title: `${l.isOverdue ? 'Overdue Follow-up' : 'Respond to inquiry'} regarding ${l.service || l.title || 'services'}`,
-      dealValue: l.estimatedValue || 100000,
+      score: l.leadScore || 0,
+      priorityScore: Math.min(99, (l.leadScore || 50) + (l.isOverdue ? 15 : l.hasRecentReply ? 10 : 5)),
+      type: l.isOverdue ? 'followup_due' : l.hasRecentReply ? 'reply_urgent' : 'qualify_inbound',
+      title: l.isOverdue
+        ? `Overdue follow-up — ${l.contactId?.fullName || 'lead'} has not been contacted`
+        : l.hasRecentReply
+          ? `Reply to recent ${l.source || 'channel'} message from ${l.contactId?.fullName || 'lead'}`
+          : `Follow up with ${l.contactId?.fullName || 'lead'}`,
+      dealValue: l.estimatedValue || 0,
       dueIn: l.isOverdue ? 'Overdue now' : 'Due within 2 hours',
-      aiReason: l.aiSummary || 'High intent prospect awaiting response to move forward in pipeline.',
-      suggestedAction: l.recommendedAction || 'Send Discovery Call Confirmation',
+      aiReason: l.aiSummary || 'Lead requires attention based on score and activity.',
+      suggestedAction: l.recommendedAction || 'Open Lead',
     }));
 
+    // Revenue at risk: high-value leads with no outbound contact in 48h
+    const riskThreshold = new Date(Date.now() - 48 * 3600 * 1000);
+    const atRiskLeads = leads.filter(
+      l => l.estimatedValue > 0 && (!l.lastContactAt || new Date(l.lastContactAt) < riskThreshold)
+    );
+    const revenueAtRiskItems = atRiskLeads.slice(0, 3).map(l => ({
+      leadId: l._id,
+      name: l.contactId?.fullName || 'Lead',
+      company: l.contactId?.company || '',
+      value: l.estimatedValue || 0,
+      reason: l.lastContactAt
+        ? `No contact in ${Math.floor((Date.now() - new Date(l.lastContactAt)) / 3600000)} hours.`
+        : 'Never contacted since lead creation.',
+      urgency: !l.lastContactAt ? 'high' : 'medium',
+    }));
+
+    // Lead decay: hot/warm leads going silent
+    const decayThreshold = new Date(Date.now() - 72 * 3600 * 1000);
+    const decayLeads = leads.filter(
+      l => l.leadTemperature !== 'cold' &&
+        l.lastInboundAt &&
+        new Date(l.lastInboundAt) < decayThreshold
+    );
+    const leadDecay = decayLeads.slice(0, 3).map(l => {
+      const daysSilent = Math.floor((Date.now() - new Date(l.lastInboundAt)) / 86400000);
+      return {
+        leadId: l._id,
+        name: l.contactId?.fullName || 'Lead',
+        company: l.contactId?.company || '',
+        daysSilent,
+        lastScore: l.leadScore || 0,
+        currentScore: Math.max(0, (l.leadScore || 50) - daysSilent * 3),
+        recommended: 'Send a low-friction re-engagement message.',
+      };
+    });
+
+    const firstName = req.user?.name?.split(' ')[0] || 'there';
+    const hour = now.getHours();
+    const greeting = `Good ${hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'}, ${firstName}!`;
+
+    const summaryText = urgentTasks.length > 0
+      ? `You have ${urgentTasks.length} high-priority sales touch${urgentTasks.length !== 1 ? 'es' : ''} today.`
+      : "You're all caught up — no urgent actions right now.";
+
     const todayData = {
-      greeting: `Good morning, ${req.user?.name?.split(' ')[0] || 'there'}!`,
-      summaryText: `You have ${urgentTasks.length} high-priority sales touches and ₹${revenueAtRisk.toLocaleString('en-IN')} in active pipeline today.`,
+      greeting,
+      summaryText,
       stats: {
         urgentFollowUps: urgentTasks.length,
         revenueAtRisk,
         hotLeadsUncontacted: hotCount,
-        meetingsToday: 2,
-        closedDealsMonth: 3,
+        meetingsToday,
+        closedDealsMonth,
       },
       priorityActions,
+      revenueAtRisk: revenueAtRiskItems,
+      leadDecay,
     };
 
     res.json({ success: true, data: { leads, todayData } });
   },
 
-  async checkDuplicate(req, res) {
-    const { email, phone, name } = req.body;
-    import('mongoose');
-    const mongoose = (await import('mongoose')).default;
-    if (mongoose.connection.readyState !== 1) {
-      const { mockLeads } = await import('../services/mockData.js');
-      const found = mockLeads.find(l => 
-        (email && l.contactId?.email?.toLowerCase() === email.toLowerCase()) ||
-        (phone && l.contactId?.phone === phone)
-      );
-      return res.json({ success: true, data: { isDuplicate: !!found, existingLead: found || null } });
-    }
-    const existing = await leadService.checkDuplicate(req.organizationId, { email, phone, name });
-    res.json({ success: true, data: existing });
-  },
-
+  /**
+   * GET /api/leads/:id/score-explanation
+   * Returns real AI analysis factors for a lead — no hardcoded data.
+   */
   async getScoreExplanation(req, res) {
+    const analysis = await AIAnalysis.findOne({
+      leadId: req.params.id,
+      organizationId: req.organizationId,
+      type: 'lead_analysis',
+      success: true,
+    }).sort({ createdAt: -1 });
+
+    if (!analysis || !analysis.output) {
+      return res.json({
+        success: true,
+        data: {
+          explanation: null,
+          message: 'No AI analysis available for this lead yet. Run an analysis first.',
+        },
+      });
+    }
+
+    const output = analysis.output;
+
+    // Build explanation from stored analysis output
     const explanation = {
-      score: 92,
-      temperature: 'hot',
-      positiveFactors: [
-        { factor: 'High purchase intent identified in message text', impact: '+25 pts' },
-        { factor: 'Budget confirmed above typical agency minimum (₹1.2L+)', impact: '+20 pts' },
-        { factor: 'Urgent kickoff timeline requested (within 1-2 weeks)', impact: '+15 pts' },
-        { factor: 'Direct business decision-maker inquiry', impact: '+12 pts' },
-      ],
-      negativeFactors: [
-        { factor: 'Introductory discovery call not yet scheduled', impact: '-5 pts' },
-      ],
-      recommendation: 'Respond immediately with discovery meeting scheduler link.',
+      score: output.score || 0,
+      temperature: output.temperature || 'cold',
+      intent: output.intent,
+      confidence: output.intentConfidence,
+      summary: output.summary,
+      positiveFactors: [],
+      negativeFactors: [],
+      recommendation: output.recommendedAction || 'Review lead manually.',
+      analyzedAt: analysis.createdAt,
     };
+
+    // Build factor list from actual analysis output fields
+    if (output.score >= 70) explanation.positiveFactors.push({ factor: 'High lead score indicates strong purchase intent', impact: `Score: ${output.score}` });
+    if (output.intent && output.intent !== 'inquiry') explanation.positiveFactors.push({ factor: `Intent detected: ${output.intent}`, impact: '+intent signal' });
+    if (output.budget?.min || output.budget?.max) explanation.positiveFactors.push({ factor: 'Budget information identified in conversation', impact: '+budget signal' });
+    if (output.timeline) explanation.positiveFactors.push({ factor: `Timeline mentioned: ${output.timeline}`, impact: '+urgency signal' });
+    if (output.buyingSignals?.length) output.buyingSignals.forEach(s => explanation.positiveFactors.push({ factor: s, impact: '+buying signal' }));
+    if (output.painPoints?.length) explanation.positiveFactors.push({ factor: `Pain points identified: ${output.painPoints.slice(0, 2).join(', ')}`, impact: '+qualification' });
+
+    if (output.objections?.length) output.objections.forEach(o => explanation.negativeFactors.push({ factor: o, impact: '-objection' }));
+    if (output.score < 50) explanation.negativeFactors.push({ factor: 'Low confidence in purchase intent', impact: '-intent signal' });
+    if (!output.budget?.min && !output.budget?.max) explanation.negativeFactors.push({ factor: 'Budget not confirmed yet', impact: '-qualification gap' });
+
     res.json({ success: true, data: { explanation } });
   },
 
+  /**
+   * GET /api/leads/:id/objections
+   * Returns real objections from stored AI analysis.
+   */
   async getObjections(req, res) {
-    const { mockObjections } = await import('../services/mockData.js');
-    res.json({ success: true, data: { objections: Object.values(mockObjections) } });
+    const analysis = await AIAnalysis.findOne({
+      leadId: req.params.id,
+      organizationId: req.organizationId,
+      type: 'lead_analysis',
+      success: true,
+    }).sort({ createdAt: -1 });
+
+    if (!analysis || !analysis.output) {
+      return res.json({ success: true, data: { objections: [] } });
+    }
+
+    const output = analysis.output;
+    const objections = [];
+
+    if (output.objections?.length) {
+      output.objections.forEach(o => {
+        objections.push({
+          type: 'Identified Objection',
+          detectedSnippet: o,
+          recommendedStrategy: 'Address directly with proof or social evidence.',
+          suggestedRebuttal: output.recommendedAction || 'Understand the concern and provide relevant case studies.',
+        });
+      });
+    }
+
+    res.json({ success: true, data: { objections } });
   },
 
   async getConversation(req, res) {

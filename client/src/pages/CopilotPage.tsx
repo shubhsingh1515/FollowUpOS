@@ -28,7 +28,7 @@ export default function CopilotPage() {
     {
       id: 'init-1',
       role: 'assistant',
-      content: "Hello Arjun! I'm your FollowUpOS Sales Copilot. I analyze your leads, conversations, and pipeline to give you actionable next steps. What would you like to review?",
+      content: "Hello, I'm your FollowUpOS Sales Copilot. I analyze your leads, conversations, and pipeline to give you actionable next steps. What would you like to review?",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ])
@@ -134,11 +134,10 @@ export default function CopilotPage() {
 
               <div className={`max-w-[85%] space-y-2.5 ${isUser ? 'items-end' : 'items-start'}`}>
                 <div
-                  className={`p-3.5 rounded-2xl text-xs leading-relaxed shadow-xs ${
-                    isUser
-                      ? 'bg-indigo-600 text-white rounded-br-xs'
-                      : 'bg-muted/80 text-foreground rounded-bl-xs border border-border/40'
-                  }`}
+                  className={`p-3.5 rounded-2xl text-xs leading-relaxed shadow-xs ${isUser
+                    ? 'bg-indigo-600 text-white rounded-br-xs'
+                    : 'bg-muted/80 text-foreground rounded-bl-xs border border-border/40'
+                    }`}
                 >
                   <p className="whitespace-pre-wrap">{msg.content}</p>
                 </div>

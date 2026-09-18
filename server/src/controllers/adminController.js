@@ -7,6 +7,7 @@ import { SupportTicket } from '../models/SupportTicket.js';
 import { AuditLog } from '../models/AuditLog.js';
 import { FeatureFlag } from '../models/FeatureFlag.js';
 import { UsageEvent } from '../models/UsageEvent.js';
+import { WebhookEvent } from '../models/WebhookEvent.js';
 import { billingService } from '../billing/BillingService.js';
 import { generateTokens } from '../middleware/auth.js';
 
@@ -293,19 +294,66 @@ export const getAuditLogs = async (req, res) => {
 export const getSystemHealth = async (req, res) => {
   try {
     const dbStatus = mongoose.connection.readyState === 1 ? 'healthy' : 'degraded';
-    
+
+    // Real webhook count for today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const webhooksToday = await WebhookEvent.countDocuments({
+      createdAt: { $gte: startOfDay },
+    });
+
+    const failedWebhooksToday = await WebhookEvent.countDocuments({
+      createdAt: { $gte: startOfDay },
+      status: 'failed',
+    });
+
     res.json({
       success: true,
       data: {
         api: { status: 'healthy', uptime: process.uptime(), version: '2.0.0' },
-        database: { status: dbStatus, host: mongoose.connection.host || 'local' },
-        aiProvider: { status: process.env.OPENAI_API_KEY ? 'healthy' : 'mock_ready' },
-        billing: { status: process.env.RAZORPAY_KEY_ID ? 'healthy' : 'mock_ready' },
-        email: { status: process.env.SMTP_HOST ? 'healthy' : 'mock_ready' },
+        database: { status: dbStatus, host: mongoose.connection.host || 'disconnected' },
+        aiProvider: { status: process.env.OPENAI_API_KEY ? 'configured' : 'mock_mode' },
+        billing: { status: process.env.RAZORPAY_KEY_ID && !process.env.RAZORPAY_KEY_ID.includes('YourKey') ? 'configured' : 'mock_mode' },
+        email: { status: process.env.SMTP_HOST && process.env.SMTP_USER ? 'configured' : 'not_configured' },
         scheduler: { status: 'healthy', jobs: ['followup_cadence_worker', 'usage_meter_sync'] },
-        webhooks: { status: 'healthy', processedToday: 42 }
+        webhooks: {
+          status: failedWebhooksToday > 0 ? 'degraded' : 'healthy',
+          processedToday: webhooksToday,
+          failedToday: failedWebhooksToday,
+        },
       }
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getPlanDistribution = async (req, res) => {
+  try {
+    const distribution = await Subscription.aggregate([
+      {
+        $match: { status: { $in: ['active', 'trialing'] } }
+      },
+      {
+        $group: {
+          _id: '$plan',
+          count: { $sum: 1 },
+          totalAmount: { $sum: '$amount' },
+        }
+      },
+      { $sort: { count: -1 } }
+    ]);
+
+    const totalActive = distribution.reduce((sum, d) => sum + d.count, 0);
+
+    const result = distribution.map(d => ({
+      plan: d._id || 'unknown',
+      count: d.count,
+      totalMRR: d.totalAmount || 0,
+      percentage: totalActive > 0 ? Math.round((d.count / totalActive) * 100) : 0,
+    }));
+
+    res.json({ success: true, data: result });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -320,5 +368,6 @@ export default {
   getSupportTickets,
   updateSupportTicket,
   getAuditLogs,
-  getSystemHealth
+  getSystemHealth,
+  getPlanDistribution,
 };

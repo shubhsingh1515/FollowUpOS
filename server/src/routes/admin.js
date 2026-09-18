@@ -30,5 +30,6 @@ router.get('/support-tickets', adminController.getSupportTickets);
 router.patch('/support-tickets/:id', adminController.updateSupportTicket);
 router.get('/audit-logs', adminController.getAuditLogs);
 router.get('/system-health', adminController.getSystemHealth);
+router.get('/plan-distribution', adminController.getPlanDistribution);
 
 export default router;

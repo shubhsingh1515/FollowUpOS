@@ -1,62 +1,71 @@
 import { analyticsService } from '../services/AnalyticsService.js';
-import mongoose from 'mongoose';
-import { mockAnalytics } from '../services/mockData.js';
 
+/**
+ * Analytics Controller
+ * All endpoints use real MongoDB aggregations from AnalyticsService.
+ * No mock data fallbacks — empty states are returned when there is no data.
+ */
 export const analyticsController = {
-  async overview(req, res) {
-    if (mongoose.connection.readyState !== 1) {
-      return res.json({ success: true, data: mockAnalytics.overview });
+  async overview(req, res, next) {
+    try {
+      const dateRange = {
+        startDate: req.query.startDate,
+        endDate: req.query.endDate,
+      };
+      const data = await analyticsService.getOverview(req.organizationId, dateRange);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
     }
-    const dateRange = {
-      startDate: req.query.startDate,
-      endDate: req.query.endDate,
-    };
-    const data = await analyticsService.getOverview(req.organizationId, dateRange);
-    res.json({ success: true, data });
   },
 
-  async leadsBySource(req, res) {
-    if (mongoose.connection.readyState !== 1) {
-      return res.json({ success: true, data: mockAnalytics.leadsBySource });
+  async leadsBySource(req, res, next) {
+    try {
+      const dateRange = { startDate: req.query.startDate, endDate: req.query.endDate };
+      const data = await analyticsService.getLeadsBySource(req.organizationId, dateRange);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
     }
-    const dateRange = { startDate: req.query.startDate, endDate: req.query.endDate };
-    const data = await analyticsService.getLeadsBySource(req.organizationId, dateRange);
-    res.json({ success: true, data });
   },
 
-  async conversionFunnel(req, res) {
-    if (mongoose.connection.readyState !== 1) {
-      return res.json({ success: true, data: mockAnalytics.conversionFunnel });
+  async conversionFunnel(req, res, next) {
+    try {
+      const data = await analyticsService.getConversionFunnel(req.organizationId);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
     }
-    const data = await analyticsService.getConversionFunnel(req.organizationId);
-    res.json({ success: true, data });
   },
 
-  async revenue(req, res) {
-    if (mongoose.connection.readyState !== 1) {
-      return res.json({ success: true, data: mockAnalytics.revenueByMonth });
+  async revenue(req, res, next) {
+    try {
+      const months = parseInt(req.query.months) || 6;
+      const data = await analyticsService.getRevenueByMonth(req.organizationId, months);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
     }
-    const months = parseInt(req.query.months) || 6;
-    const data = await analyticsService.getRevenueByMonth(req.organizationId, months);
-    res.json({ success: true, data });
   },
 
-  async teamPerformance(req, res) {
-    if (mongoose.connection.readyState !== 1) {
-      return res.json({ success: true, data: mockAnalytics.teamPerformance });
+  async teamPerformance(req, res, next) {
+    try {
+      const dateRange = { startDate: req.query.startDate, endDate: req.query.endDate };
+      const data = await analyticsService.getTeamPerformance(req.organizationId, dateRange);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
     }
-    const dateRange = { startDate: req.query.startDate, endDate: req.query.endDate };
-    const data = await analyticsService.getTeamPerformance(req.organizationId, dateRange);
-    res.json({ success: true, data });
   },
 
-  async leadsTrend(req, res) {
-    if (mongoose.connection.readyState !== 1) {
-      return res.json({ success: true, data: mockAnalytics.leadsTrend });
+  async leadsTrend(req, res, next) {
+    try {
+      const days = parseInt(req.query.days) || 30;
+      const data = await analyticsService.getLeadsTrend(req.organizationId, days);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
     }
-    const days = parseInt(req.query.days) || 30;
-    const data = await analyticsService.getLeadsTrend(req.organizationId, days);
-    res.json({ success: true, data });
   },
 };
 

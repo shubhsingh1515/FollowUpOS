@@ -173,6 +173,14 @@ Your sales summary:
 
 Stay focused and close those deals! Your team is counting on you. 💪`;
   }
+
+  async generateText(prompt, options = {}) {
+    await new Promise((r) => setTimeout(r, 250));
+    // Extract the user question from the prompt (last line after 'User question:')
+    const match = prompt.match(/User question:\s*"(.+?)"/);
+    const question = match ? match[1] : 'your query';
+    return `Based on your CRM data, here is what I found for: "${question}". Please review the data results below for specific details.`;
+  }
 }
 
 export default MockAIProvider;

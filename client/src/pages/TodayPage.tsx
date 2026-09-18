@@ -32,19 +32,11 @@ export default function TodayPage() {
     staleTime: 60000,
   })
 
-  const todayData = todayRes || {
-    greeting: `Good morning, ${user?.name?.split(' ')[0] || 'there'}!`,
-    summaryText: "Here's what needs your sales attention right now.",
-    stats: {
-      urgentFollowUps: 4,
-      revenueAtRisk: 450000,
-      hotLeadsUncontacted: 3,
-      meetingsToday: 2,
-    },
-    priorityActions: [],
-    revenueAtRisk: [],
-    leadDecay: [],
-  }
+  const todayData = todayRes || null
+
+  const priorityActions = todayData?.priorityActions || []
+  const revenueAtRiskItems = todayData?.revenueAtRisk || []
+  const leadDecayItems = todayData?.leadDecay || []
 
   const handleCompleteAction = (actionId: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -63,10 +55,11 @@ export default function TodayPage() {
             AI Sales Execution Mode
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-            {todayData.greeting}
+            {todayData?.greeting ||
+              `Good ${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, ${user?.name?.split(' ')[0] || 'there'}!`}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {todayData.summaryText}
+            {todayData?.summaryText || "Here's your sales execution view for today."}
           </p>
         </div>
 
@@ -100,7 +93,7 @@ export default function TodayPage() {
               <Clock className="w-4 h-4 text-indigo-600" />
             </div>
             <div className="text-3xl font-extrabold text-foreground mt-2">
-              {todayData.priorityActions?.length || 4}
+              {isLoading ? '…' : (priorityActions.length || 0)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
               <span className="text-emerald-600 font-semibold">
@@ -118,10 +111,14 @@ export default function TodayPage() {
               <ShieldAlert className="w-4 h-4 text-amber-600" />
             </div>
             <div className="text-3xl font-extrabold text-amber-600 mt-2">
-              {formatCurrency(todayData.stats?.revenueAtRisk || 450000, 'INR')}
+              {isLoading ? '…' : (
+                todayData?.stats?.revenueAtRisk != null
+                  ? formatCurrency(todayData.stats.revenueAtRisk, 'INR')
+                  : '—'
+              )}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              2 high-value leads with no contact in 24h
+              High-value leads with no recent contact
             </p>
           </CardContent>
         </Card>
@@ -133,7 +130,7 @@ export default function TodayPage() {
               <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
             </div>
             <div className="text-3xl font-extrabold text-foreground mt-2">
-              {todayData.stats?.hotLeadsUncontacted || 3}
+              {isLoading ? '…' : (todayData?.stats?.hotLeadsUncontacted ?? '—')}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
               Average response target: &lt; 15 mins
@@ -148,10 +145,12 @@ export default function TodayPage() {
               <Calendar className="w-4 h-4 text-emerald-600" />
             </div>
             <div className="text-3xl font-extrabold text-foreground mt-2">
-              {todayData.stats?.meetingsToday || 2}
+              {isLoading ? '…' : (todayData?.stats?.meetingsToday ?? '—')}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Next meeting: 11:30 AM (TechStartup)
+              {todayData?.stats?.meetingsToday === 0
+                ? 'No meetings scheduled today'
+                : 'Check your calendar for details'}
             </p>
           </CardContent>
         </Card>
@@ -171,12 +170,21 @@ export default function TodayPage() {
               </Badge>
             </div>
             <span className="text-xs text-muted-foreground">
-              {completedActions.length} of {todayData.priorityActions?.length || 4} done
+              {completedActions.length} of {priorityActions.length} done
             </span>
           </div>
 
           <div className="space-y-3">
-            {(todayData.priorityActions || []).map((action: any, idx: number) => {
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">Loading your priorities…</div>
+            ) : priorityActions.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-3xl mb-2">🎉</div>
+                <p className="font-medium text-sm">You're all caught up!</p>
+                <p className="text-xs text-muted-foreground mt-1">No urgent actions right now. Check back later.</p>
+              </div>
+            ) : (
+              priorityActions.map((action: any, idx: number) => {
               const isDone = completedActions.includes(action.id)
               return (
                 <div
@@ -263,7 +271,8 @@ export default function TodayPage() {
                   </div>
                 </div>
               )
-            })}
+            })
+            )}
           </div>
         </div>
 
@@ -281,7 +290,7 @@ export default function TodayPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {(todayData.revenueAtRisk || []).map((risk: any, idx: number) => (
+              {(revenueAtRiskItems).map((risk: any, idx: number) => (
                 <div
                   key={idx}
                   onClick={() => navigate(`/leads/${risk.leadId}`)}
@@ -314,7 +323,7 @@ export default function TodayPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {(todayData.leadDecay || []).map((decay: any, idx: number) => (
+              {(leadDecayItems).map((decay: any, idx: number) => (
                 <div
                   key={idx}
                   onClick={() => navigate(`/leads/${decay.leadId}`)}

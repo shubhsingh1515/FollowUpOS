@@ -24,62 +24,24 @@ export default function BillingPage() {
   const [actionMessage, setActionMessage] = useState('')
   const [showCancelModal, setShowCancelModal] = useState(false)
 
-  const plans = [
-    {
-      id: 'starter',
-      name: 'Starter',
-      priceMonthly: 999,
-      priceAnnual: 799,
-      description: 'Perfect for boutique service agencies, freelancers, and solo consultants.',
-      features: [
-        '100 Leads / month',
-        '150 AI Intent Analyses',
-        '300 Automated AI Touches',
-        '1 Team Member Seat',
-        'Website Form & API Ingestion',
-        'Standard Email Support',
-      ],
-    },
-    {
-      id: 'growth',
-      name: 'Growth',
-      badge: 'Most Popular',
-      priceMonthly: 2999,
-      priceAnnual: 2399,
-      description: 'For growing service teams needing multi-channel follow-ups and AI copilot.',
-      features: [
-        '1,000 Leads / month',
-        '1,500 AI Intent Analyses',
-        '3,000 Automated AI Touches',
-        '5 Team Member Seats',
-        'Official WhatsApp Business + Webhook Ingestion',
-        'AI Sales Copilot & Deal Recommendations',
-        'Pipeline Stage Forecasting',
-        'Priority Technical Support',
-      ],
-    },
-    {
-      id: 'agency',
-      name: 'Agency & Enterprise',
-      priceMonthly: 7999,
-      priceAnnual: 6399,
-      description: 'For high-ticket service operations, multi-brand agencies, and larger sales teams.',
-      features: [
-        '5,000 Leads / month',
-        '10,000 AI Intent Analyses',
-        '20,000 Automated AI Touches',
-        '25 Team Member Seats',
-        'Custom Webhooks & Meta Lead Ads Ingestion',
-        'Full AI Copilot & Custom Persona Fine-Tuning',
-        'White-Label Architecture & Custom Domain',
-        '99.9% Uptime SLA & Dedicated Account Manager',
-      ],
-    },
-  ]
+  const [plans, setPlans] = useState<any[]>([])
+  const [plansLoading, setPlansLoading] = useState(true)
 
   useEffect(() => {
     fetchBillingData()
+    fetchPlans()
   }, [])
+
+  const fetchPlans = async () => {
+    try {
+      const res = await api.get('/billing/plans')
+      if (res.data?.plans) setPlans(res.data.plans)
+    } catch {
+      // Plans fetch failed — keep empty array, plans section will show loading state
+    } finally {
+      setPlansLoading(false)
+    }
+  }
 
   const fetchBillingData = async () => {
     try {
@@ -88,40 +50,22 @@ export default function BillingPage() {
       if (res.data) {
         setBillingData(res.data)
       }
-    } catch {
-      // Fallback mock billing state
-      setBillingData({
-        subscription: {
-          plan: 'growth',
-          status: 'active',
-          billingCycle: 'monthly',
-          amount: 2999,
-          currentPeriodEnd: new Date(Date.now() + 24 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        usage: {
-          monthlyLeads: 142,
-          monthlyAIAnalyses: 218,
-          monthlyAIMessages: 460,
-          teamSeats: 2,
-          limits: { monthlyLeads: 1000, monthlyAIAnalyses: 1500, monthlyAIMessages: 3000, teamSeats: 5 },
-          percentages: { leads: 14, aiAnalyses: 15, aiMessages: 15 }
-        },
-        invoices: [
-          { id: 'INV-2026-002', date: 'Sep 01, 2026', amount: '₹2,999.00', status: 'Paid', method: 'Razorpay UPI' },
-          { id: 'INV-2026-001', date: 'Aug 01, 2026', amount: '₹2,999.00', status: 'Paid', method: 'Razorpay UPI' },
-        ]
-      })
+    } catch (err) {
+      // Show billing error state — do not fake active subscription
+      setBillingData(null)
     } finally {
       setLoading(false)
     }
   }
 
-  const currentPlanId = billingData?.subscription?.plan || (organization as any)?.plan || 'growth'
+  const currentPlanId = billingData?.subscription?.plan || (organization as any)?.plan || 'starter'
   const currentSubStatus = billingData?.subscription?.status || 'active'
   const usage = billingData?.usage || {
-    monthlyLeads: 142,
-    limits: { monthlyLeads: 1000, monthlyAIAnalyses: 1500, monthlyAIMessages: 3000, teamSeats: 5 },
-    percentages: { leads: 14, aiAnalyses: 15, aiMessages: 15 }
+    monthlyLeads: 0,
+    monthlyAIAnalyses: 0,
+    teamSeats: 1,
+    limits: { monthlyLeads: 1000, monthlyAIAnalyses: 1500, teamSeats: 5 },
+    percentages: { leads: 0, aiAnalyses: 0, teamSeats: 20 }
   }
 
   const handleOpenCheckout = (plan: any) => {
@@ -234,13 +178,13 @@ export default function BillingPage() {
       )}
 
       {/* Quota Warning (If Near 80% or 100%) */}
-      {usage.percentages?.leads >= 80 && (
+      {usage?.percentages?.leads != null && usage.percentages.leads >= 80 && (
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <h4 className="text-xs font-bold text-amber-800 dark:text-amber-300">Plan Lead Quota Alert</h4>
             <p className="text-xs text-amber-700 dark:text-amber-400">
-              You have consumed {usage.monthlyLeads} of your {usage.limits?.monthlyLeads} monthly leads ({usage.percentages.leads}%). Upgrade to Growth or Agency to avoid lead ingestion pauses.
+              You have consumed {usage?.monthlyLeads || 0} of your {usage?.limits?.monthlyLeads || 1000} monthly leads ({usage?.percentages?.leads || 0}%). Upgrade to Growth or Agency to avoid lead ingestion pauses.
             </p>
           </div>
         </div>
@@ -305,30 +249,30 @@ export default function BillingPage() {
               <div className="flex justify-between text-xs mb-1">
                 <span className="font-medium text-foreground">Inbound Leads Ingested</span>
                 <span className="font-mono text-muted-foreground">
-                  {usage.monthlyLeads || 0} / {usage.limits?.monthlyLeads || 1000} ({usage.percentages?.leads || 0}%)
+                  {usage?.monthlyLeads || 0} / {usage?.limits?.monthlyLeads || 1000} ({usage?.percentages?.leads || 0}%)
                 </span>
               </div>
-              <Progress value={usage.percentages?.leads || 14} className="h-2" />
+              <Progress value={usage?.percentages?.leads || 0} className="h-2" />
             </div>
 
             <div>
               <div className="flex justify-between text-xs mb-1">
                 <span className="font-medium text-foreground">AI Intent Analyses & Reply Drafts</span>
                 <span className="font-mono text-muted-foreground">
-                  {usage.monthlyAIAnalyses || 0} / {usage.limits?.monthlyAIAnalyses || 1500} ({usage.percentages?.aiAnalyses || 0}%)
+                  {usage?.monthlyAIAnalyses || 0} / {usage?.limits?.monthlyAIAnalyses || 1500} ({usage?.percentages?.aiAnalyses || 0}%)
                 </span>
               </div>
-              <Progress value={usage.percentages?.aiAnalyses || 15} className="h-2" />
+              <Progress value={usage?.percentages?.aiAnalyses || 0} className="h-2" />
             </div>
 
             <div>
               <div className="flex justify-between text-xs mb-1">
                 <span className="font-medium text-foreground">Team Member Seats</span>
                 <span className="font-mono text-muted-foreground">
-                  {usage.teamSeats || 1} / {usage.limits?.teamSeats || 5} active
+                  {usage?.teamSeats || 1} / {usage?.limits?.teamSeats || 5} active
                 </span>
               </div>
-              <Progress value={Math.round(((usage.teamSeats || 1) / (usage.limits?.teamSeats || 5)) * 100)} className="h-2" />
+              <Progress value={Math.round(((usage?.teamSeats || 1) / (usage?.limits?.teamSeats || 5)) * 100)} className="h-2" />
             </div>
           </CardContent>
         </Card>
@@ -377,7 +321,7 @@ export default function BillingPage() {
                   <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider font-mono">
                     Included Features:
                   </span>
-                  {plan.features.map((feat, idx) => (
+                  {(plan.features || []).map((feat: string, idx: number) => (
                     <div key={idx} className="flex items-start gap-2 text-muted-foreground">
                       <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
                       <span>{feat}</span>

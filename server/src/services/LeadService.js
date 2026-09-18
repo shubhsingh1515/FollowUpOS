@@ -29,24 +29,6 @@ export class LeadService {
    * Get leads with filters and pagination
    */
   async getLeads(organizationId, filters = {}, pagination = {}) {
-    import('mongoose');
-    const mongoose = (await import('mongoose')).default;
-    if (mongoose.connection.readyState !== 1) {
-      const { mockLeads } = await import('./mockData.js');
-      let filtered = [...mockLeads];
-      if (filters.status) filtered = filtered.filter(l => l.status === filters.status);
-      if (filters.temperature) filtered = filtered.filter(l => l.leadTemperature === filters.temperature);
-      if (filters.search) {
-        const s = filters.search.toLowerCase();
-        filtered = filtered.filter(l => l.name.toLowerCase().includes(s) || l.contactId?.company?.toLowerCase().includes(s));
-      }
-      return {
-        leads: filtered,
-        total: filtered.length,
-        totalPages: 1,
-        page: 1,
-      };
-    }
 
     const {
       status, temperature, source, ownerId,
@@ -118,13 +100,6 @@ export class LeadService {
    * Get a single lead with full details
    */
   async getLead(leadId, organizationId) {
-    import('mongoose');
-    const mongoose = (await import('mongoose')).default;
-    if (mongoose.connection.readyState !== 1) {
-      const { mockLeads } = await import('./mockData.js');
-      return mockLeads.find(l => l._id === leadId) || mockLeads[0];
-    }
-
     const lead = await Lead.findOne({ _id: leadId, organizationId })
       .populate('contactId')
       .populate('ownerId', 'name avatar email');

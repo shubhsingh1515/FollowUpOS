@@ -54,6 +54,16 @@ export class AIProvider {
   }
 
   /**
+   * Generate a general-purpose text response (used by Copilot)
+   * @param {string} prompt - Full prompt text
+   * @param {Object} options - Options (maxTokens, temperature)
+   * @returns {Promise<string>} - Generated text
+   */
+  async generateText(prompt, options = {}) {
+    throw new Error('generateText() must be implemented by provider');
+  }
+
+  /**
    * Check if the provider is available
    * @returns {boolean}
    */
