@@ -128,45 +128,45 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 text-slate-100">
+    <div className="min-h-screen flex items-center justify-center bg-background p-6 text-foreground">
       <div className="w-full max-w-md space-y-6">
         {/* Brand Header */}
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2.5 mb-4 group">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-2xl text-white tracking-tight">FollowUpOS</span>
+            <span className="font-bold text-2xl text-foreground tracking-tight">FollowUpOS</span>
           </Link>
         </div>
 
         {/* Card Container */}
-        <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-8 shadow-2xl backdrop-blur-xl">
+        <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
           {/* STATE 1: Token Verifying In-Progress */}
           {verifying && (
             <div className="text-center py-8 space-y-4">
-              <Loader2 className="w-12 h-12 text-indigo-400 animate-spin mx-auto" />
-              <h2 className="text-xl font-bold text-white">Verifying your email...</h2>
-              <p className="text-sm text-slate-400">Validating your security token with FollowUpOS.</p>
+              <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
+              <h2 className="text-xl font-bold text-foreground">Verifying your email...</h2>
+              <p className="text-sm text-muted-foreground">Validating your security token with FollowUpOS.</p>
             </div>
           )}
 
           {/* STATE 2: Verification Success */}
           {!verifying && isVerified && (
             <div className="text-center py-4 space-y-5">
-              <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+              <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">Email verified.</h1>
-                <p className="text-slate-400 text-sm mt-2 leading-relaxed">
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">Email verified.</h1>
+                <p className="text-muted-foreground text-sm mt-2 leading-relaxed">
                   Your FollowUpOS account is ready. Live lead ingestion and AI follow-up automation are now unlocked.
                 </p>
               </div>
 
               <Button
                 type="button"
-                className="w-full h-11 bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-lg shadow-indigo-600/30"
+                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-md shadow-primary/20"
                 onClick={handleContinueAfterVerify}
               >
                 Continue to FollowUpOS →
@@ -177,14 +177,14 @@ export default function VerifyEmailPage() {
           {/* STATE 3: Token Invalid or Expired */}
           {!verifying && token && verificationError && (
             <div className="text-center py-4 space-y-5">
-              <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto">
+              <div className="w-14 h-14 rounded-full bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
                 <AlertCircle className="w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white tracking-tight">
+                <h1 className="text-xl font-bold text-foreground tracking-tight">
                   This verification link is no longer valid.
                 </h1>
-                <p className="text-slate-400 text-sm mt-2 leading-relaxed">
+                <p className="text-muted-foreground text-sm mt-2 leading-relaxed">
                   The link may have expired or already been used. Please request a new verification email below.
                 </p>
               </div>
@@ -193,14 +193,14 @@ export default function VerifyEmailPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full h-11 border-white/10 hover:bg-white/5 text-white"
+                  className="w-full h-11 border-border hover:bg-muted text-foreground"
                   onClick={() => navigate('/verify-email' + (currentEmail ? `?email=${encodeURIComponent(currentEmail)}` : ''))}
                 >
                   Send me a new verification email
                 </Button>
                 <Link
                   to="/login"
-                  className="inline-block text-xs text-slate-400 hover:text-white transition-colors"
+                  className="inline-block text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Back to Sign In
                 </Link>
@@ -212,30 +212,30 @@ export default function VerifyEmailPage() {
           {!token && !isVerified && (
             <div className="space-y-6">
               <div className="text-center space-y-3">
-                <div className="w-14 h-14 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto">
+                <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto">
                   <Mail className="w-7 h-7" />
                 </div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">Check your inbox</h1>
-                <p className="text-slate-400 text-sm leading-relaxed">
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">Check your inbox</h1>
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   We've sent a verification link to:
                 </p>
-                <div className="inline-block px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/10 font-mono text-sm text-indigo-300">
+                <div className="inline-block px-3.5 py-1.5 rounded-lg bg-card border border-border font-mono text-sm text-primary">
                   {maskEmail(currentEmail)}
                 </div>
-                <p className="text-slate-400 text-xs leading-relaxed">
+                <p className="text-muted-foreground text-xs leading-relaxed">
                   Please verify your email to activate your FollowUpOS workspace and begin capturing leads.
                 </p>
               </div>
 
               {resendMessage && (
-                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl p-3 flex items-start gap-2">
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs rounded-xl p-3 flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <div>{resendMessage}</div>
                 </div>
               )}
 
               {resendError && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl p-3 flex items-start gap-2">
+                <div className="bg-rose-50 border border-rose-200 text-rose-600 text-xs rounded-xl p-3 flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <div>{resendError}</div>
                 </div>
@@ -245,7 +245,7 @@ export default function VerifyEmailPage() {
               <div className="space-y-3 pt-2">
                 <Button
                   type="button"
-                  className="w-full h-11 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
+                  className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm shadow-md shadow-primary/20 transition-all flex items-center justify-center gap-2"
                   onClick={handleResend}
                   disabled={resending || resendCooldown > 0}
                 >
@@ -265,29 +265,29 @@ export default function VerifyEmailPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full h-10 border-white/10 hover:bg-white/5 text-slate-300 hover:text-white text-xs flex items-center justify-center gap-2"
+                    className="w-full h-10 border-border hover:bg-muted text-foreground/80 hover:text-foreground text-xs flex items-center justify-center gap-2"
                     onClick={() => setIsChangingEmail(true)}
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>Change email address</span>
                   </Button>
                 ) : (
-                  <form onSubmit={handleChangeEmailSubmit} className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
-                    <Label htmlFor="newEmail" className="text-xs text-slate-300">Enter new work email</Label>
+                  <form onSubmit={handleChangeEmailSubmit} className="bg-card border border-border rounded-xl p-4 space-y-3">
+                    <Label htmlFor="newEmail" className="text-xs text-foreground/80">Enter new work email</Label>
                     <Input
                       id="newEmail"
                       type="email"
                       placeholder="new@company.com"
                       value={newEmailInput}
                       onChange={(e) => setNewEmailInput(e.target.value)}
-                      className="bg-slate-900 border-white/10 text-white text-sm"
+                      className="bg-background border-border text-foreground text-sm"
                     />
-                    {changeEmailError && <p className="text-xs text-red-400">{changeEmailError}</p>}
+                    {changeEmailError && <p className="text-xs text-rose-500">{changeEmailError}</p>}
                     <div className="flex gap-2">
                       <Button
                         type="submit"
                         size="sm"
-                        className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs flex-1"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs flex-1"
                         disabled={changingEmailLoading}
                       >
                         {changingEmailLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
@@ -297,7 +297,7 @@ export default function VerifyEmailPage() {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="text-slate-400 hover:text-white text-xs"
+                        className="text-muted-foreground hover:text-foreground text-xs"
                         onClick={() => { setIsChangingEmail(false); setChangeEmailError('') }}
                       >
                         Cancel
@@ -310,7 +310,7 @@ export default function VerifyEmailPage() {
               <div className="text-center pt-2">
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Back to Sign In</span>

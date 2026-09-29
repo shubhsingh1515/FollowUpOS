@@ -34,30 +34,30 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 text-slate-100">
+    <div className="min-h-screen flex items-center justify-center bg-background p-6 text-foreground">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2.5 mb-4 group">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-2xl text-white tracking-tight">FollowUpOS</span>
+            <span className="font-bold text-2xl text-foreground tracking-tight">FollowUpOS</span>
           </Link>
         </div>
 
-        <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-8 shadow-2xl backdrop-blur-xl space-y-6">
+        <div className="bg-card border border-border rounded-2xl p-8 shadow-sm space-y-6">
           <div className="text-center space-y-2">
-            <div className="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto mb-3">
+            <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto mb-3">
               <KeyRound className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Reset your password</h1>
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Reset your password</h1>
+            <p className="text-muted-foreground text-sm leading-relaxed">
               Enter your work email and we'll send you a single-use link to reset your password.
             </p>
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl p-3 flex items-start gap-2">
+            <div className="bg-rose-50 border border-rose-200 text-rose-600 text-xs rounded-xl p-3 flex items-start gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <div>{error}</div>
             </div>
@@ -65,17 +65,17 @@ export default function ForgotPasswordPage() {
 
           {submitted ? (
             <div className="space-y-5 text-center py-2">
-              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm rounded-xl p-4 flex items-start gap-3 text-left">
-                <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-400" />
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl p-4 flex items-start gap-3 text-left">
+                <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-600" />
                 <div className="leading-relaxed">
                   If an account exists with this email, a password reset link has been dispatched to your inbox.
                 </div>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 Please check your inbox and click the reset button within 1 hour.
               </p>
               <Link to="/login">
-                <Button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm">
+                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm mt-4">
                   Return to Sign In
                 </Button>
               </Link>
@@ -83,20 +83,20 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-slate-300 text-xs font-medium">Work Email</Label>
+                <Label htmlFor="email" className="text-foreground/80 text-xs font-medium">Work Email</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="you@company.com"
                   {...register('email')}
-                  className={`bg-slate-900/80 border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-500 focus:ring-indigo-500/20 ${errors.email ? 'border-red-500/50' : ''}`}
+                  className={`bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 ${errors.email ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20' : ''}`}
                 />
-                {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
+                {errors.email && <p className="text-xs text-rose-500 mt-1">{errors.email.message}</p>}
               </div>
 
               <Button
                 type="submit"
-                className="w-full h-11 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm shadow-lg shadow-indigo-600/30 transition-all"
+                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm shadow-md shadow-primary/20 transition-all"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
@@ -108,7 +108,7 @@ export default function ForgotPasswordPage() {
           <div className="text-center pt-2">
             <Link
               to="/login"
-              className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Sign In</span>

@@ -35,7 +35,6 @@ export interface Organization {
   }
   onboardingCompleted: boolean
   onboardingStep?: number
-  isDemo?: boolean
 }
 
 interface AuthState {

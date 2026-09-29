@@ -35,16 +35,16 @@ export default function CopilotInteractiveSection() {
   const current = PROMPT_PRESETS[selectedPrompt]
 
   return (
-    <section className="py-24 relative overflow-hidden bg-[#08090D] border-t border-white/[0.06]">
+    <section className="py-24 relative overflow-hidden bg-muted/20 border-t border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         <div className="max-w-3xl space-y-3">
-          <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/30 text-xs font-mono font-semibold uppercase tracking-wider">
+          <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200 text-xs font-mono font-semibold uppercase tracking-wider">
             AI Sales Copilot
           </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
             Your Sales Team Just Got a Second Brain.
           </h2>
-          <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
             Ask complex questions about your pipeline, extract deal insights, generate multi-lingual follow-up drafts, and forecast revenue with natural language.
           </p>
         </div>
@@ -53,7 +53,7 @@ export default function CopilotInteractiveSection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left: Suggested Prompts List */}
           <div className="lg:col-span-4 space-y-3">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-mono">
               Try Interactive Prompts
             </span>
             <div className="space-y-2">
@@ -66,12 +66,12 @@ export default function CopilotInteractiveSection() {
                     className={cn(
                       'w-full text-left p-3.5 rounded-xl border text-xs transition-all duration-200 flex items-center justify-between gap-3',
                       isSelected
-                        ? 'border-purple-500/60 bg-purple-950/20 text-white font-semibold shadow-lg shadow-purple-950/30 ring-1 ring-purple-500/30'
-                        : 'border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:text-white hover:border-white/[0.12] hover:bg-white/[0.04]'
+                        ? 'border-purple-300 bg-purple-50 text-foreground font-semibold shadow-sm ring-1 ring-purple-200'
+                        : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-purple-200 hover:bg-muted'
                     )}
                   >
                     <span className="truncate">{p.label}</span>
-                    <ArrowRight className={cn('w-3.5 h-3.5 shrink-0 transition-transform', isSelected ? 'text-purple-400 translate-x-1' : 'text-zinc-600')} />
+                    <ArrowRight className={cn('w-3.5 h-3.5 shrink-0 transition-transform', isSelected ? 'text-purple-600 translate-x-1' : 'text-muted-foreground')} />
                   </button>
                 )
               })}
@@ -79,39 +79,39 @@ export default function CopilotInteractiveSection() {
           </div>
 
           {/* Right: Copilot Response Stream Visualizer */}
-          <div className="lg:col-span-8 p-6 rounded-2xl border border-white/[0.1] bg-[#0E1017]/90 backdrop-blur-xl shadow-2xl space-y-5">
+          <div className="lg:col-span-8 p-6 rounded-2xl border border-border bg-card shadow-sm space-y-5">
             {/* User Message Bubble */}
             <div className="flex items-start gap-3 justify-end">
-              <div className="max-w-lg p-3.5 rounded-2xl rounded-tr-sm bg-indigo-600 text-white text-xs font-medium shadow-md leading-relaxed">
+              <div className="max-w-lg p-3.5 rounded-2xl rounded-tr-sm bg-primary text-primary-foreground text-xs font-medium shadow-sm leading-relaxed">
                 {current.label}
               </div>
-              <div className="w-8 h-8 rounded-full bg-zinc-800 text-zinc-300 font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
+              <div className="w-8 h-8 rounded-full bg-muted text-muted-foreground font-bold flex items-center justify-center text-xs shrink-0 mt-0.5 border border-border">
                 <User className="w-4 h-4" />
               </div>
             </div>
 
             {/* AI Copilot Response Bubble */}
             <div className="flex items-start gap-3 justify-start animate-fade-in">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-md shadow-purple-600/30">
+              <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-sm border border-purple-200">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="max-w-xl p-4 rounded-2xl rounded-tl-sm bg-white/[0.04] border border-white/[0.08] text-zinc-200 text-xs leading-relaxed space-y-3">
-                <div className="flex items-center justify-between border-b border-white/[0.06] pb-2 text-[10px] font-mono text-purple-400">
+              <div className="max-w-xl p-4 rounded-2xl rounded-tl-sm bg-muted/50 border border-border text-foreground text-xs leading-relaxed space-y-3 shadow-sm">
+                <div className="flex items-center justify-between border-b border-border pb-2 text-[10px] font-mono text-purple-700">
                   <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" /> FollowUpOS Copilot Intelligence</span>
-                  <Badge variant="outline" className="text-[9px] bg-purple-500/10 text-purple-300 border-purple-500/30">
+                  <Badge variant="outline" className="text-[9px] bg-purple-100 text-purple-700 border-purple-200">
                     {current.meta}
                   </Badge>
                 </div>
 
-                <p className="text-zinc-100 font-sans leading-relaxed">
+                <p className="text-foreground font-sans leading-relaxed">
                   {current.answer}
                 </p>
 
                 <div className="pt-2 flex flex-wrap items-center gap-2">
-                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] h-7 px-3 rounded-lg">
+                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground text-[11px] h-7 px-3 rounded-lg shadow-sm">
                     Execute Recommended Action
                   </Button>
-                  <Button variant="outline" size="sm" className="border-white/10 text-zinc-300 hover:bg-white/5 text-[11px] h-7 px-3 rounded-lg">
+                  <Button variant="outline" size="sm" className="border-border text-foreground hover:bg-muted text-[11px] h-7 px-3 rounded-lg">
                     Copy Response
                   </Button>
                 </div>

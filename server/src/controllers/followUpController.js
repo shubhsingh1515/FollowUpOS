@@ -5,10 +5,6 @@ export const followUpController = {
   async list(req, res) {
     import('mongoose');
     const mongoose = (await import('mongoose')).default;
-    if (mongoose.connection.readyState !== 1) {
-      const { mockFollowUps } = await import('../services/mockData.js');
-      return res.json({ success: true, data: { tasks: mockFollowUps } });
-    }
 
     const today = new Date();
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));

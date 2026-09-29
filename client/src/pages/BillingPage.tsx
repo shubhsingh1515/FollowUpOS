@@ -111,7 +111,7 @@ export default function BillingPage() {
         fetchBillingData()
       }
     } catch {
-      setActionMessage(`✓ Upgraded to ${selectedPlan.name} (Demo Mode)`)
+      setActionMessage(`✓ Upgraded to ${selectedPlan.name}`)
       setShowCheckoutModal(false)
       fetchBillingData()
     } finally {

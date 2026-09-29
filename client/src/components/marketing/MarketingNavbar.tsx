@@ -42,35 +42,35 @@ export default function MarketingNavbar() {
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
         scrolled
-          ? 'bg-[#090A0E]/85 backdrop-blur-xl border-b border-white/[0.08] shadow-2xl py-3'
+          ? 'bg-background/85 backdrop-blur-xl border-b border-border shadow-md py-3'
           : 'bg-transparent py-5'
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform duration-200">
-            <Sparkles className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform duration-200">
+            <Sparkles className="w-4 h-4 text-primary-foreground" />
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="font-bold text-sm tracking-tight text-white group-hover:text-indigo-200 transition-colors">
+            <span className="font-bold text-sm tracking-tight text-foreground group-hover:text-primary transition-colors">
               FollowUpOS
             </span>
-            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20">
               v2.0
             </span>
           </div>
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1 rounded-full px-4 py-1.5 border border-white/[0.08] bg-white/[0.02] backdrop-blur-md">
+        <nav className="hidden md:flex items-center gap-1 rounded-full px-4 py-1.5 border border-border bg-card/50 backdrop-blur-md">
           <Link
             to="/"
             className={cn(
               'text-xs font-medium px-3.5 py-1.5 rounded-full transition-colors',
               location.pathname === '/'
-                ? 'text-white bg-white/10 shadow-xs'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                ? 'text-primary bg-primary/10 shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             )}
           >
             Overview
@@ -85,13 +85,13 @@ export default function MarketingNavbar() {
                 className={cn(
                   'text-xs font-medium px-3.5 py-1.5 rounded-full transition-colors flex items-center gap-1.5',
                   isActive
-                    ? 'text-white bg-white/10 shadow-xs'
-                    : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                    ? 'text-primary bg-primary/10 shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 )}
               >
                 <span>{link.label}</span>
                 {link.badge && (
-                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-indigo-500/30 text-indigo-300 font-semibold">
+                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-primary/20 text-primary font-semibold">
                     {link.badge}
                   </span>
                 )}
@@ -104,7 +104,7 @@ export default function MarketingNavbar() {
         <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
             <Link to="/today">
-              <Button size="sm" className="bg-white text-black hover:bg-zinc-200 text-xs font-semibold h-8.5 rounded-full px-4 py-2 gap-1.5">
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold h-8.5 rounded-full px-4 py-2 gap-1.5">
                 Go to Workspace <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
@@ -112,14 +112,14 @@ export default function MarketingNavbar() {
             <>
               <Link
                 to="/login"
-                className="text-xs font-medium text-zinc-300 hover:text-white px-3 py-1.5 transition-colors"
+                className="text-xs font-medium text-muted-foreground hover:text-foreground px-3 py-1.5 transition-colors"
               >
                 Sign In
               </Link>
               <Link to="/register">
                 <Button
                   size="sm"
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold h-8.5 rounded-full px-4 py-2 shadow-md shadow-indigo-600/30 gap-1.5 transition-all hover:scale-[1.02]"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold h-8.5 rounded-full px-4 py-2 shadow-sm shadow-primary/20 gap-1.5 transition-all hover:scale-[1.02]"
                 >
                   Start Free <ArrowRight className="w-3.5 h-3.5" />
                 </Button>
@@ -131,7 +131,7 @@ export default function MarketingNavbar() {
         {/* Mobile Menu Toggle Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+          className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           aria-label="Toggle Navigation Menu"
         >
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -140,13 +140,13 @@ export default function MarketingNavbar() {
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#0B0D13] border-b border-white/[0.08] px-4 pt-3 pb-6 space-y-3 animate-slide-up shadow-2xl">
+        <div className="md:hidden bg-background border-b border-border px-4 pt-3 pb-6 space-y-3 animate-slide-up shadow-md">
           <div className="flex flex-col space-y-1">
             <Link
               to="/"
               className={cn(
                 'px-3 py-2 rounded-lg text-sm font-medium',
-                location.pathname === '/' ? 'bg-indigo-600/20 text-indigo-300 font-semibold' : 'text-zinc-300 hover:bg-white/5'
+                location.pathname === '/' ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground hover:bg-muted'
               )}
             >
               Overview
@@ -157,12 +157,12 @@ export default function MarketingNavbar() {
                 to={link.href}
                 className={cn(
                   'px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-between',
-                  location.pathname === link.href ? 'bg-indigo-600/20 text-indigo-300 font-semibold' : 'text-zinc-300 hover:bg-white/5'
+                  location.pathname === link.href ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground hover:bg-muted'
                 )}
               >
                 <span>{link.label}</span>
                 {link.badge && (
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/20 text-primary border border-primary/30">
                     {link.badge}
                   </span>
                 )}
@@ -170,22 +170,22 @@ export default function MarketingNavbar() {
             ))}
           </div>
 
-          <div className="pt-3 border-t border-white/[0.08] flex flex-col gap-2">
+          <div className="pt-3 border-t border-border flex flex-col gap-2">
             {isAuthenticated ? (
               <Link to="/today">
-                <Button className="w-full bg-white text-black hover:bg-zinc-200 text-xs font-semibold h-9 py-2 rounded-xl">
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold h-9 py-2 rounded-xl">
                   Go to Workspace
                 </Button>
               </Link>
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="outline" className="w-full border-white/10 text-white hover:bg-white/5 text-xs h-9 rounded-xl">
+                  <Button variant="outline" className="w-full border-border text-foreground hover:bg-muted text-xs h-9 rounded-xl">
                     Sign In
                   </Button>
                 </Link>
                 <Link to="/register">
-                  <Button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold h-9 rounded-xl shadow-lg shadow-indigo-600/25">
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold h-9 rounded-xl shadow-sm shadow-primary/20">
                     Start Free
                   </Button>
                 </Link>

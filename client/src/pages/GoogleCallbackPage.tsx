@@ -59,22 +59,22 @@ export default function GoogleCallbackPage() {
   }, [searchParams, navigate, setAuth])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 text-slate-100">
+    <div className="min-h-screen flex items-center justify-center bg-background p-6 text-foreground">
       <div className="w-full max-w-sm text-center space-y-6">
-        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-500/30 mx-auto animate-bounce">
-          <Sparkles className="w-6 h-6 text-white" />
+        <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 mx-auto animate-bounce">
+          <Sparkles className="w-6 h-6 text-primary-foreground" />
         </div>
 
         {error ? (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-xl p-4 flex items-center justify-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-400" />
+          <div className="bg-rose-50 border border-rose-200 text-rose-600 text-sm rounded-xl p-4 flex items-center justify-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
             <span>{error}</span>
           </div>
         ) : (
           <div className="space-y-3">
-            <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mx-auto" />
-            <h2 className="text-lg font-bold text-white tracking-tight">Authenticating with Google...</h2>
-            <p className="text-xs text-slate-400">Verifying identity and preparing your sales workspace.</p>
+            <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto" />
+            <h2 className="text-lg font-bold text-foreground tracking-tight">Authenticating with Google...</h2>
+            <p className="text-xs text-muted-foreground">Verifying identity and preparing your sales workspace.</p>
           </div>
         )}
       </div>

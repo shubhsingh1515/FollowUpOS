@@ -99,30 +99,30 @@ export default function PricingPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#07080B] text-zinc-100 selection:bg-indigo-500 selection:text-white font-sans antialiased">
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary font-sans antialiased">
       <MarketingNavbar />
 
       {/* Hero Header */}
       <section className="pt-36 pb-16 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 text-center max-w-3xl">
-          <Badge variant="outline" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/30 text-xs font-mono font-semibold uppercase tracking-wider py-1 px-3">
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-mono font-semibold uppercase tracking-wider py-1 px-3">
             Transparent Pricing
           </Badge>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
-            Fair, Outcome-Driven Plans for <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-indigo-200">Scaling Teams.</span>
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground leading-tight">
+            Fair, Outcome-Driven Plans for <span className="text-primary italic">Scaling Teams.</span>
           </h1>
-          <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-xl mx-auto">
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl mx-auto">
             Choose a plan that matches your monthly lead volume. All plans include automated safeguards and zero setup fees.
           </p>
 
           {/* Billing Cycle Toggle */}
           <div className="pt-4 flex items-center justify-center gap-3">
-            <div className="p-1 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center gap-1 text-xs">
+            <div className="p-1 rounded-full bg-muted border border-border flex items-center gap-1 text-xs">
               <button
                 onClick={() => setBillingCycle('monthly')}
                 className={cn(
                   'px-4 py-1.5 rounded-full font-semibold transition-all',
-                  billingCycle === 'monthly' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
+                  billingCycle === 'monthly' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 Monthly Billing
@@ -131,10 +131,10 @@ export default function PricingPage() {
                 onClick={() => setBillingCycle('annual')}
                 className={cn(
                   'px-4 py-1.5 rounded-full font-semibold transition-all flex items-center gap-1.5',
-                  billingCycle === 'annual' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
+                  billingCycle === 'annual' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 )}
               >
-                Annual Billing <Badge variant="outline" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[9px] py-0 px-1 font-mono">Save 20%</Badge>
+                Annual Billing <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[9px] py-0 px-1 font-mono">Save 20%</Badge>
               </button>
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function PricingPage() {
       </section>
 
       {/* Pricing Cards Grid */}
-      <section className="py-12 relative bg-[#090B0F] border-t border-b border-white/[0.06]">
+      <section className="py-12 relative bg-muted/30 border-t border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {plans.map((plan) => {
@@ -153,13 +153,13 @@ export default function PricingPage() {
                   className={cn(
                     'p-8 rounded-3xl border flex flex-col justify-between transition-all duration-300 relative',
                     plan.highlight
-                      ? 'border-indigo-500 bg-gradient-to-b from-indigo-950/30 to-[#0E1118] shadow-2xl shadow-indigo-950/50 ring-1 ring-indigo-500/50 scale-[1.02]'
-                      : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15]'
+                      ? 'border-primary bg-primary/5 shadow-xl ring-1 ring-primary/20 scale-[1.02]'
+                      : 'border-border bg-card shadow-sm hover:border-primary/30'
                   )}
                 >
                   {plan.badge && (
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-indigo-600 text-white font-bold text-[10px] uppercase font-mono px-3 py-0.5 tracking-wider shadow-md">
+                      <Badge className="bg-primary text-primary-foreground font-bold text-[10px] uppercase font-mono px-3 py-0.5 tracking-wider shadow-sm">
                         {plan.badge}
                       </Badge>
                     </div>
@@ -167,25 +167,25 @@ export default function PricingPage() {
 
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-                      <p className="text-xs text-zinc-400 mt-1 min-h-[36px]">{plan.tagline}</p>
+                      <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-1 min-h-[36px]">{plan.tagline}</p>
                     </div>
 
                     <div className="pt-2 flex items-baseline gap-1">
-                      <span className="text-4xl font-black font-mono text-white tracking-tight">
+                      <span className="text-4xl font-black font-mono text-foreground tracking-tight">
                         ₹{price.toLocaleString()}
                       </span>
-                      <span className="text-xs text-zinc-400 font-mono">/ month</span>
+                      <span className="text-xs text-muted-foreground font-mono">/ month</span>
                     </div>
 
-                    <div className="space-y-3 pt-4 border-t border-white/[0.06]">
-                      <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">
+                    <div className="space-y-3 pt-4 border-t border-border">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-mono">
                         Included Features:
                       </span>
                       <ul className="space-y-2.5">
                         {plan.features.map((feat, idx) => (
-                          <li key={idx} className="flex items-start gap-2.5 text-xs text-zinc-300">
-                            <Check className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                          <li key={idx} className="flex items-start gap-2.5 text-xs text-foreground/80">
+                            <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                             <span>{feat}</span>
                           </li>
                         ))}
@@ -193,14 +193,14 @@ export default function PricingPage() {
                     </div>
                   </div>
 
-                  <div className="pt-8 border-t border-white/[0.06] mt-6">
+                  <div className="pt-8 border-t border-border mt-6">
                     <Link to="/register">
                       <Button
                         className={cn(
-                          'w-full text-xs font-bold h-10 rounded-xl transition-all shadow-md',
+                          'w-full text-xs font-bold h-10 rounded-xl transition-all shadow-sm',
                           plan.highlight
-                            ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
-                            : 'bg-white text-black hover:bg-zinc-200'
+                            ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                            : 'bg-muted text-foreground hover:bg-muted/80 border border-border'
                         )}
                       >
                         Start 14-Day Free Trial
@@ -215,41 +215,41 @@ export default function PricingPage() {
       </section>
 
       {/* Feature Comparison Matrix */}
-      <section className="py-24 relative bg-[#07080B]">
+      <section className="py-24 relative bg-background">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="text-center space-y-2 max-w-xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
               Detailed Feature Matrix
             </h2>
-            <p className="text-xs sm:text-sm text-zinc-400">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Compare capabilities, limits, and team seats across all tiers.
             </p>
           </div>
 
-          <div className="overflow-x-auto border border-white/[0.08] rounded-3xl bg-[#0E1118]/80 shadow-2xl">
+          <div className="overflow-x-auto border border-border rounded-3xl bg-card shadow-sm">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-white/[0.08] bg-white/[0.02]">
-                  <th className="p-4 sm:p-5 text-zinc-400 font-mono uppercase tracking-wider w-2/5">Capability</th>
-                  <th className="p-4 sm:p-5 text-white font-bold font-mono">Starter</th>
-                  <th className="p-4 sm:p-5 text-indigo-400 font-bold font-mono">Growth</th>
-                  <th className="p-4 sm:p-5 text-white font-bold font-mono">Agency</th>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="p-4 sm:p-5 text-muted-foreground font-mono uppercase tracking-wider w-2/5">Capability</th>
+                  <th className="p-4 sm:p-5 text-foreground font-bold font-mono">Starter</th>
+                  <th className="p-4 sm:p-5 text-primary font-bold font-mono">Growth</th>
+                  <th className="p-4 sm:p-5 text-foreground font-bold font-mono">Agency</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.06]">
+              <tbody className="divide-y divide-border">
                 {featureMatrix.map((section, sIdx) => (
                   <>
-                    <tr key={sIdx} className="bg-black/40">
-                      <td colSpan={4} className="p-3.5 px-5 text-[11px] font-bold text-zinc-400 uppercase tracking-wider font-mono">
+                    <tr key={sIdx} className="bg-muted">
+                      <td colSpan={4} className="p-3.5 px-5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider font-mono">
                         {section.category}
                       </td>
                     </tr>
                     {section.items.map((item, iIdx) => (
-                      <tr key={iIdx} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="p-4 px-5 text-zinc-300 font-medium">{item.name}</td>
-                        <td className="p-4 text-zinc-400 font-mono">{item.starter}</td>
-                        <td className="p-4 text-indigo-300 font-mono font-semibold">{item.growth}</td>
-                        <td className="p-4 text-zinc-300 font-mono">{item.agency}</td>
+                      <tr key={iIdx} className="hover:bg-muted/50 transition-colors">
+                        <td className="p-4 px-5 text-foreground/80 font-medium">{item.name}</td>
+                        <td className="p-4 text-muted-foreground font-mono">{item.starter}</td>
+                        <td className="p-4 text-primary font-mono font-semibold">{item.growth}</td>
+                        <td className="p-4 text-muted-foreground font-mono">{item.agency}</td>
                       </tr>
                     ))}
                   </>

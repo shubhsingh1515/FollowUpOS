@@ -65,39 +65,36 @@ export default function LoginPage() {
     window.location.href = `${backendBase}/api/auth/google?clientUrl=${encodeURIComponent(clientOrigin)}`
   }
 
-  const handleDemoLogin = () => {
-    setValue('email', 'shubham@gmail.com')
-    setValue('password', 'shubham123')
-  }
+
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-100">
+    <div className="min-h-screen flex bg-background text-foreground">
       {/* Left panel - branding & value statement */}
-      <div className="hidden lg:flex lg:w-1/2 p-12 flex-col justify-between relative overflow-hidden border-r border-white/10 bg-slate-900/60 backdrop-blur-xl">
-        <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="hidden lg:flex lg:w-1/2 p-12 flex-col justify-between relative overflow-hidden border-r border-border bg-muted/30 backdrop-blur-xl">
+        <div className="absolute -top-32 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10">
           <Link to="/" className="flex items-center gap-3 w-fit group">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <div className="font-bold text-white text-lg tracking-tight">FollowUpOS</div>
-              <div className="text-indigo-400 text-xs font-mono">AI Sales Execution Platform</div>
+              <div className="font-bold text-foreground text-lg tracking-tight">FollowUpOS</div>
+              <div className="text-primary text-xs font-mono">AI Sales Execution Platform</div>
             </div>
           </Link>
         </div>
 
         <div className="relative z-10 my-auto py-12 max-w-lg">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium mb-6">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-6">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Autonomous Multi-Channel Follow-up
           </div>
-          <h1 className="text-4xl font-extrabold text-white leading-tight tracking-tight mb-4">
+          <h1 className="text-4xl font-extrabold text-foreground leading-tight tracking-tight mb-4">
             Never let a high-value lead slip through the cracks.
           </h1>
-          <p className="text-slate-400 text-base leading-relaxed">
+          <p className="text-muted-foreground text-base leading-relaxed">
             FollowUpOS captures inbound leads across WhatsApp, Email, Meta Ads, and Web Forms — instantly scoring intent, drafting contextual replies, and executing timed follow-up cadences.
           </p>
 
@@ -108,15 +105,15 @@ export default function LoginPage() {
               { label: 'Lead Recovery Rate', value: '+42%' },
               { label: 'Multi-Tenant Security', value: 'AES-256' },
             ].map((stat) => (
-              <div key={stat.label} className="bg-white/5 border border-white/10 rounded-xl p-3.5 backdrop-blur-sm">
-                <div className="text-xl font-bold text-white font-mono">{stat.value}</div>
-                <div className="text-slate-400 text-xs mt-0.5">{stat.label}</div>
+              <div key={stat.label} className="bg-card border border-border rounded-xl p-3.5 shadow-sm">
+                <div className="text-xl font-bold text-foreground font-mono">{stat.value}</div>
+                <div className="text-muted-foreground text-xs mt-0.5">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="relative z-10 text-xs text-slate-500 font-mono">
+        <div className="relative z-10 text-xs text-muted-foreground font-mono">
           © {new Date().getFullYear()} FollowUpOS Inc. Production Grade & Tenant Isolated.
         </div>
       </div>
@@ -126,25 +123,25 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-6">
           {/* Mobile brand header */}
           <div className="lg:hidden flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <div className="font-bold text-white text-lg">FollowUpOS</div>
-              <div className="text-indigo-400 text-xs font-mono">AI Sales Platform</div>
+              <div className="font-bold text-foreground text-lg">FollowUpOS</div>
+              <div className="text-primary text-xs font-mono">AI Sales Platform</div>
             </div>
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Welcome to FollowUpOS</h2>
-            <p className="text-slate-400 text-sm mt-1.5 leading-relaxed">
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">Welcome to FollowUpOS</h2>
+            <p className="text-muted-foreground text-sm mt-1.5 leading-relaxed">
               AI sales execution for teams that don't want valuable leads to slip through.
             </p>
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-xl p-3.5 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-400" />
+            <div className="bg-rose-50 border border-rose-200 text-rose-600 text-sm rounded-xl p-3.5 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-600" />
               <div className="leading-snug">{error}</div>
             </div>
           )}
@@ -154,12 +151,12 @@ export default function LoginPage() {
             <Button
               type="button"
               variant="outline"
-              className="w-full h-11 bg-white hover:bg-slate-100 text-slate-900 border-white/20 font-medium text-sm flex items-center justify-center gap-3 shadow-md hover:shadow-lg transition-all"
+              className="w-full h-11 bg-card hover:bg-muted text-foreground border-border font-medium text-sm flex items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all"
               onClick={handleGoogleLogin}
               disabled={isGoogleLoading}
             >
               {isGoogleLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-slate-700" />
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               ) : (
                 <GoogleIcon className="w-4 h-4" />
               )}
@@ -169,33 +166,32 @@ export default function LoginPage() {
 
           {/* Divider */}
           <div className="relative flex items-center justify-center">
-            <div className="border-t border-white/10 " />
-            <div className="bg-slate-900 px-3 text-xs text-slate-500 uppercase  font-mono">
+            <div className="border-t border-border w-full" />
+            <div className="bg-background px-3 text-xs text-muted-foreground uppercase font-mono absolute">
               or sign in with email
             </div>
-            <div className="border-t border-white/10 " />
           </div>
 
           {/* Email / Password Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-slate-300 text-xs font-medium">Work email</Label>
+              <Label htmlFor="email" className="text-foreground/80 text-xs font-medium">Work email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="you@company.com"
                 {...register('email')}
-                className={`bg-slate-900/80 border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-500 focus:ring-indigo-500/20 ${errors.email ? 'border-red-500/50' : ''}`}
+                className={`bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 ${errors.email ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20' : ''}`}
               />
-              {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-xs text-rose-500 mt-1">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-slate-300 text-xs font-medium">Password</Label>
+                <Label htmlFor="password" className="text-foreground/80 text-xs font-medium">Password</Label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+                  className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
                 >
                   Forgot password?
                 </Link>
@@ -206,23 +202,23 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   {...register('password')}
-                  className={`bg-slate-900/80 border-white/10 text-white placeholder:text-slate-500 pr-10 focus:border-indigo-500 focus:ring-indigo-500/20 ${errors.password ? 'border-red-500/50' : ''}`}
+                  className={`bg-background border-border text-foreground placeholder:text-muted-foreground pr-10 focus:border-primary focus:ring-primary/20 ${errors.password ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20' : ''}`}
                 />
                 <button
                   type="button"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-red-400 mt-1">{errors.password.message}</p>}
+              {errors.password && <p className="text-xs text-rose-500 mt-1">{errors.password.message}</p>}
             </div>
 
             <Button
               type="submit"
-              className="w-full h-11 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm shadow-lg shadow-indigo-600/30 transition-all"
+              className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm shadow-md shadow-primary/20 transition-all mt-2"
               disabled={isSubmitting}
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
@@ -230,23 +226,11 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Quick-fill helper for test accounts */}
-          {/* <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between">
-            <div className="text-xs text-slate-400">
-              <span className="font-medium text-slate-300">Demo Fill:</span> shubham@gmail.com
-            </div>
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors underline"
-            >
-              Auto-Fill
-            </button>
-          </div> */}
 
-          <div className="text-center text-sm text-slate-400">
+
+          <div className="text-center text-sm text-muted-foreground mt-4">
             Don't have an account?{' '}
-            <Link to="/register" className="text-indigo-400 font-medium hover:text-indigo-300 transition-colors">
+            <Link to="/register" className="text-primary font-medium hover:text-primary/80 transition-colors">
               Create account
             </Link>
           </div>

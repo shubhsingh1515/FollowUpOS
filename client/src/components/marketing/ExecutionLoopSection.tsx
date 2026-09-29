@@ -73,17 +73,17 @@ export default function ExecutionLoopSection() {
   const [activeStage, setActiveStage] = useState(0)
 
   return (
-    <section className="py-24 relative overflow-hidden bg-[#08090D] border-t border-white/[0.06]">
+    <section className="py-24 relative overflow-hidden bg-muted/10 border-t border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Section Header */}
         <div className="max-w-3xl space-y-3">
-          <Badge variant="outline" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/30 text-xs font-mono font-semibold uppercase tracking-wider">
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-mono font-semibold uppercase tracking-wider">
             Execution Loop
           </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
             From Inbound Signal to Banked Revenue.
           </h2>
-          <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
             FollowUpOS doesn't just store contacts like a static database. It orchestrates every step between lead arrival and closing.
           </p>
         </div>
@@ -99,13 +99,13 @@ export default function ExecutionLoopSection() {
                 className={cn(
                   'p-6 rounded-2xl border transition-all duration-300 cursor-pointer relative group flex flex-col justify-between',
                   isSelected
-                    ? 'border-indigo-500/60 bg-gradient-to-b from-indigo-950/20 to-black/60 shadow-xl shadow-indigo-950/40 ring-1 ring-indigo-500/40'
-                    : 'border-white/[0.07] bg-white/[0.02] hover:border-white/[0.15] hover:bg-white/[0.04]'
+                    ? 'border-primary/50 bg-primary/5 shadow-md ring-1 ring-primary/20'
+                    : 'border-border bg-card hover:border-primary/30 hover:bg-muted/30 shadow-sm'
                 )}
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-zinc-500">
+                    <span className="font-mono text-xs font-bold text-muted-foreground">
                       STEP {stage.num}
                     </span>
                     <Badge variant="outline" className={cn('text-[10px] font-mono', stage.color)}>
@@ -114,22 +114,22 @@ export default function ExecutionLoopSection() {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-indigo-200 transition-colors">
+                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                       {stage.title}
                     </h3>
-                    <p className="text-xs font-mono text-zinc-400 mt-0.5">
+                    <p className="text-xs font-mono text-muted-foreground mt-0.5">
                       {stage.subtitle}
                     </p>
                   </div>
 
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     {stage.desc}
                   </p>
                 </div>
 
-                <div className="mt-5 pt-3.5 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-zinc-500">
+                <div className="mt-5 pt-3.5 border-t border-border flex items-center justify-between text-[11px] font-mono text-muted-foreground">
                   <span className="truncate">{stage.meta}</span>
-                  <ArrowRight className={cn('w-3.5 h-3.5 transition-transform', isSelected ? 'text-indigo-400 translate-x-1' : 'text-zinc-600')} />
+                  <ArrowRight className={cn('w-3.5 h-3.5 transition-transform', isSelected ? 'text-primary translate-x-1' : 'text-muted-foreground')} />
                 </div>
               </div>
             )

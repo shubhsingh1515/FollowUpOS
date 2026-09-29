@@ -232,7 +232,7 @@ export default function IntegrationsPage() {
   }
 
   const backendBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')
-  const webhookUrl = developerConfig.webhookUrl || `${backendBase}/api/public/webhooks/leads/demo_webhook_token`
+  const webhookUrl = developerConfig.webhookUrl || `${backendBase}/api/public/webhooks/leads/your_webhook_token`
   const embedScriptCode = `<script async src="${backendBase}/api/public/widget.js" data-followupos-form="default_contact_form" data-theme="dark"></script>`
 
   // Code snippets for Developer API
