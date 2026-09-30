@@ -321,10 +321,20 @@ export default function BillingPage() {
                   <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider font-mono">
                     Included Features:
                   </span>
-                  {(plan.features || []).map((feat: string, idx: number) => (
-                    <div key={idx} className="flex items-start gap-2 text-muted-foreground">
+                  <div className="flex items-start gap-2 text-muted-foreground">
+                    <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
+                    <span>{plan.limits?.monthlyLeads?.toLocaleString()} monthly leads</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-muted-foreground">
+                    <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
+                    <span>{plan.limits?.teamSeats} team seats</span>
+                  </div>
+                  {plan.features && Object.entries(plan.features)
+                    .filter(([_, value]) => value === true)
+                    .map(([key, _]) => (
+                    <div key={key} className="flex items-start gap-2 text-muted-foreground">
                       <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
-                      <span>{feat}</span>
+                      <span className="capitalize">{key.replace(/_/g, ' ').toLowerCase()}</span>
                     </div>
                   ))}
                 </CardContent>
