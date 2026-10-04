@@ -33,7 +33,7 @@ const navGroups: NavGroup[] = [
   {
     title: 'Workspace',
     items: [
-      { label: "Today's Priorities", href: '/today', icon: CheckSquare, badge: 'Daily', badgeColor: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20' },
+      { label: "Today's Priorities", href: '/today', icon: CheckSquare, badge: 'Daily', badgeColor: 'bg-primary/10 text-primary border-primary/20' },
       { label: 'Leads Directory', href: '/leads', icon: Users },
       { label: 'Deal Pipeline', href: '/pipeline', icon: GitBranch },
       { label: 'Omnichannel Inbox', href: '/inbox', icon: MessageSquare },
@@ -43,7 +43,7 @@ const navGroups: NavGroup[] = [
   {
     title: 'Intelligence',
     items: [
-      { label: 'AI Sales Copilot', href: '/copilot', icon: Bot, badge: 'AI', badgeColor: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' },
+      { label: 'AI Sales Copilot', href: '/copilot', icon: Bot, badge: 'AI', badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
       { label: 'Analytics & ROI', href: '/analytics', icon: BarChart3 },
       { label: 'Follow-ups Queue', href: '/followups', icon: Calendar },
     ],
@@ -92,7 +92,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const toggleTheme = () => {
-    if (theme === 'dark') setTheme('light')
+    if (isDark) setTheme('light')
     else setTheme('dark')
   }
 
@@ -115,13 +115,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         "flex items-center px-4 h-16 border-b border-border shrink-0 transition-all duration-300 overflow-hidden whitespace-nowrap",
         isCollapsed && !mobile ? "justify-center px-0" : "gap-2.5"
       )}>
-        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
-          <Sparkles className="w-4 h-4 text-white" />
+        <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-sm shrink-0">
+          <Sparkles className="w-4 h-4 text-primary-foreground" />
         </div>
         <div className={cn("flex-1 min-w-0 transition-opacity duration-300", isCollapsed && !mobile ? "opacity-0 hidden" : "opacity-100")}>
           <div className="flex items-center gap-1.5">
             <span className="font-bold text-sm tracking-tight text-foreground">FollowUpOS</span>
-            <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold">
+            <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-primary/10 text-primary font-semibold">
               v2.0
             </span>
           </div>
@@ -132,7 +132,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Organization Badge Card */}
       <div className={cn("px-3 py-2.5 border-b border-border/60 transition-all duration-300 overflow-hidden whitespace-nowrap", isCollapsed && !mobile ? "px-1" : "")}>
         <div className={cn("flex items-center gap-2 py-1.5 rounded-lg bg-muted/40 hover:bg-muted transition-colors", isCollapsed && !mobile ? "justify-center px-0" : "px-2.5")}>
-          <div className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+          <div className="w-5 h-5 rounded-md bg-foreground text-background flex items-center justify-center text-[10px] font-bold shrink-0">
             {organization?.name?.[0] || 'F'}
           </div>
           <div className={cn("flex-1 min-w-0 transition-opacity duration-300", isCollapsed && !mobile ? "opacity-0 hidden" : "opacity-100")}>
@@ -213,7 +213,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         >
           <Avatar className="h-8 w-8 border border-border shrink-0">
             <AvatarImage src={user?.avatar || ''} />
-            <AvatarFallback className="text-xs bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold">
+            <AvatarFallback className="text-xs bg-muted text-foreground font-semibold">
               {getInitials(user?.name || 'Demo User')}
             </AvatarFallback>
           </Avatar>
@@ -311,9 +311,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               variant="outline"
               size="sm"
               onClick={() => navigate('/copilot')}
-              className="hidden sm:flex items-center gap-1.5 text-xs h-8 border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10"
+              className="hidden sm:flex items-center gap-1.5 text-xs h-8 text-foreground hover:bg-muted"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
               Ask Copilot
             </Button>
 
@@ -329,7 +329,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Notifications */}
             <button className="relative p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
             </button>
 
             {/* Header Sign Out Button */}

@@ -85,11 +85,13 @@ export default function MarketingFooter() {
             © {new Date().getFullYear()} FollowUpOS Inc. All rights reserved.
           </div>
           <div className="flex items-center gap-4">
-            <span className="hover:text-foreground cursor-pointer">Privacy Policy</span>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
             <span>•</span>
-            <span className="hover:text-foreground cursor-pointer">Terms of Service</span>
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
             <span>•</span>
-            <span className="hover:text-foreground cursor-pointer">Security Safeguards</span>
+            <Link to="/cookies" className="hover:text-foreground transition-colors">Cookies</Link>
+            <span>•</span>
+            <Link to="/refund-policy" className="hover:text-foreground transition-colors">Refund Policy</Link>
           </div>
         </div>
       </div>
