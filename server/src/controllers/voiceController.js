@@ -10,15 +10,29 @@ import {
 } from '../models/index.js';
 import { VoiceEngine } from '../services/voice/VoiceEngine.js';
 
+import { encryptionService } from '../utils/encryption.js';
+import { TelnyxVoiceProvider } from '../services/voice/TelnyxVoiceProvider.js';
+
 // --- Connection Handlers ---
 
 export const status = async (req, res) => {
   try {
-    const connection = await VoiceConnection.findOne({ organizationId: req.user.organizationId });
+    const connection = await VoiceConnection.findOne({ organizationId: req.user.organizationId, provider: 'telnyx' });
     if (!connection) {
       return res.status(200).json({ status: 'unconfigured', provider: 'telnyx' });
     }
-    return res.status(200).json(connection);
+
+    const decryptedKey = encryptionService.decrypt(connection.apiKey);
+    const maskedKey = decryptedKey ? `${decryptedKey.slice(0, 6)}••••${decryptedKey.slice(-4)}` : 'TELNYX_CONFIGURED';
+
+    return res.status(200).json({
+      _id: connection._id,
+      provider: connection.provider,
+      status: connection.status,
+      accountId: connection.accountId,
+      maskedApiKey: maskedKey,
+      updatedAt: connection.updatedAt
+    });
   } catch (error) {
     console.error('Error fetching voice status:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -29,13 +43,23 @@ export const connectTelnyx = async (req, res) => {
   try {
     const { apiKey, accountId } = req.body;
     if (!apiKey) {
-      return res.status(400).json({ message: 'API Key is required' });
+      return res.status(400).json({ message: 'Telnyx API Key is required' });
     }
+
+    // Verify API key against Telnyx REST API before saving
+    const testProvider = new TelnyxVoiceProvider({ apiKey });
+    const verifyResult = await testProvider.verifyConnection();
+
+    if (!verifyResult.success && !process.env.ALLOW_DEMO_CREDENTIALS) {
+      return res.status(400).json({ message: verifyResult.message || 'Invalid Telnyx API credentials provided' });
+    }
+
+    const encryptedKey = encryptionService.encrypt(apiKey);
 
     let connection = await VoiceConnection.findOne({ organizationId: req.user.organizationId, provider: 'telnyx' });
     
     if (connection) {
-      connection.apiKey = apiKey;
+      connection.apiKey = encryptedKey;
       connection.accountId = accountId || connection.accountId;
       connection.status = 'active';
       await connection.save();
@@ -43,13 +67,22 @@ export const connectTelnyx = async (req, res) => {
       connection = await VoiceConnection.create({
         organizationId: req.user.organizationId,
         provider: 'telnyx',
-        apiKey,
+        apiKey: encryptedKey,
         accountId: accountId || '',
         status: 'active'
       });
     }
-    
-    return res.status(200).json(connection);
+
+    const maskedKey = `${apiKey.slice(0, 6)}••••${apiKey.slice(-4)}`;
+
+    return res.status(200).json({
+      _id: connection._id,
+      provider: connection.provider,
+      status: connection.status,
+      accountId: connection.accountId,
+      maskedApiKey: maskedKey,
+      message: 'Telnyx account successfully connected and verified!'
+    });
   } catch (error) {
     console.error('Error connecting Telnyx:', error);
     res.status(500).json({ message: 'Internal server error' });

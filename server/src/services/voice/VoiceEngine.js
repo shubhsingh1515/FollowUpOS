@@ -13,6 +13,7 @@ import {
 } from '../../models/index.js';
 import { TelnyxVoiceProvider } from './TelnyxVoiceProvider.js';
 import { getAIProvider } from '../../ai/index.js';
+import { encryptionService } from '../../utils/encryption.js';
 
 export class VoiceEngine {
   /**
@@ -35,7 +36,10 @@ export class VoiceEngine {
    */
   static async getProvider(organizationId) {
     const connection = await VoiceConnection.findOne({ organizationId, provider: 'telnyx', status: 'active' });
-    const apiKey = connection?.apiKey || process.env.TELNYX_API_KEY;
+    let apiKey = process.env.TELNYX_API_KEY;
+    if (connection?.apiKey) {
+      apiKey = encryptionService.decrypt(connection.apiKey) || connection.apiKey;
+    }
     return new TelnyxVoiceProvider({ apiKey, accountId: connection?.accountId });
   }
 

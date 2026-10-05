@@ -2,6 +2,8 @@ import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { Integration } from '../models/Integration.js';
 import { Organization } from '../models/Organization.js';
+import { VoiceConnection } from '../models/VoiceConnection.js';
+import { TelnyxVoiceProvider } from './voice/TelnyxVoiceProvider.js';
 import { encryptToken, decryptToken } from '../utils/encryption.js';
 import { AppError } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
@@ -104,6 +106,21 @@ export const INTEGRATION_CATALOG = [
       { key: 'orgId', label: 'OpenAI Organization ID', placeholder: 'org-••••••••', required: false, helpText: 'Optional Organization ID for multi-org OpenAI accounts.' },
     ],
     documentationUrl: 'https://platform.openai.com/api-keys',
+  },
+  {
+    provider: 'telnyx',
+    name: 'Telnyx AI Voice Calling',
+    description: 'Make & receive automated AI phone calls, manage phone numbers, and update CRM records automatically.',
+    category: 'voice',
+    icon: '📞',
+    authType: 'api_key',
+    requiredCredentials: [
+      { key: 'apiKey', label: 'Telnyx API Key', placeholder: 'KEY018...', required: true, isSecret: true, helpText: 'Generated in your Telnyx Portal under Account Settings > API Keys.' },
+    ],
+    optionalCredentials: [
+      { key: 'accountId', label: 'Telnyx Account ID / Connection ID (Optional)', placeholder: 'e.g. 1029384756', required: false, helpText: 'Optional Telnyx Account or Connection ID.' },
+    ],
+    documentationUrl: 'https://portal.telnyx.com/#/app/api-keys',
   },
   {
     provider: 'google_forms',
@@ -305,6 +322,27 @@ export class IntegrationService {
           };
         }
 
+        case 'telnyx': {
+          const apiKey = credentials.apiKey?.trim();
+          if (!apiKey) {
+            throw new Error('Telnyx API Key is required.');
+          }
+
+          const providerInstance = new TelnyxVoiceProvider({ apiKey });
+          const verifyResult = await providerInstance.verifyConnection();
+
+          if (!verifyResult.success && !config.demo.enabled) {
+            throw new Error(verifyResult.message || 'Invalid Telnyx API Key provided.');
+          }
+
+          return {
+            success: true,
+            accountIdentifier: `Telnyx Voice (${maskSecret(apiKey)})`,
+            lastVerifiedAt: new Date(),
+            message: 'Telnyx AI Voice Calling credentials verified successfully.',
+          };
+        }
+
         default:
           return {
             success: true,
@@ -379,6 +417,20 @@ export class IntegrationService {
       },
       { upsert: true, new: true }
     );
+
+    if (provider === 'telnyx' && rawCredentials.apiKey) {
+      await VoiceConnection.findOneAndUpdate(
+        { organizationId, provider: 'telnyx' },
+        {
+          organizationId,
+          provider: 'telnyx',
+          apiKey: encryptToken(rawCredentials.apiKey),
+          accountId: rawCredentials.accountId || '',
+          status: 'active',
+        },
+        { upsert: true }
+      );
+    }
 
     logger.info(`Integration ${provider} connected successfully for organization ${organizationId}`);
 
