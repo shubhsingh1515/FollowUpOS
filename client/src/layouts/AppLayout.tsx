@@ -6,7 +6,7 @@ import {
   Settings, CreditCard, LogOut, Menu, X, Bell,
   Sparkles, ChevronDown, CheckSquare, Bot, Moon, Sun,
   Search, Plus, ShieldCheck, Laptop, Flame,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, PhoneCall
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -44,6 +44,7 @@ const navGroups: NavGroup[] = [
     title: 'Intelligence',
     items: [
       { label: 'AI Sales Copilot', href: '/copilot', icon: Bot, badge: 'AI', badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
+      { label: 'AI Voice Calling', href: '/voice', icon: PhoneCall, badge: 'Telnyx', badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
       { label: 'Analytics & ROI', href: '/analytics', icon: BarChart3 },
       { label: 'Follow-ups Queue', href: '/followups', icon: Calendar },
     ],

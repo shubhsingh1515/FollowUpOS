@@ -25,6 +25,11 @@ import {
   CopilotPage,
   AnalyticsPage,
   OnboardingPage,
+  VoiceDashboardPage,
+  VoiceAgentsPage,
+  VoiceNumbersPage,
+  VoiceCallsPage,
+  VoiceCampaignsPage,
   ServicesPage,
   HowItWorksPage,
   PricingPage,
@@ -254,6 +259,46 @@ export default function App() {
         element={
           <ProtectedRoute>
             <OnboardingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/voice"
+        element={
+          <ProtectedRoute>
+            <VoiceDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/voice/agents"
+        element={
+          <ProtectedRoute>
+            <VoiceAgentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/voice/numbers"
+        element={
+          <ProtectedRoute>
+            <VoiceNumbersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/voice/calls"
+        element={
+          <ProtectedRoute>
+            <VoiceCallsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/voice/campaigns"
+        element={
+          <ProtectedRoute>
+            <VoiceCampaignsPage />
           </ProtectedRoute>
         }
       />

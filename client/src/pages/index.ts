@@ -21,6 +21,12 @@ export { default as TodayPage } from './TodayPage'
 export { default as CopilotPage } from './CopilotPage'
 export { default as AnalyticsPage } from './AnalyticsPage'
 export { default as OnboardingPage } from './OnboardingPage'
+export { default as VoiceDashboardPage } from './voice/VoiceDashboardPage'
+export { default as VoiceAgentsPage } from './voice/VoiceAgentsPage'
+export { default as VoiceNumbersPage } from './voice/VoiceNumbersPage'
+export { default as VoiceCallsPage } from './voice/VoiceCallsPage'
+export { default as VoiceCampaignsPage } from './voice/VoiceCampaignsPage'
+
 
 // Marketing Subpages
 export { default as ServicesPage } from './marketing/ServicesPage'

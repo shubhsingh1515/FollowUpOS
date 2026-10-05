@@ -5,8 +5,9 @@ import {
   ArrowLeft, Sparkles, Send, RotateCcw, MessageSquare,
   Phone, Mail, Globe, Building, Tag, ChevronDown, ChevronRight,
   Flame, Calendar, Star, TrendingUp, CheckCircle2, Edit,
-  Loader2, Clock, Wand2, ThumbsUp, ShieldAlert, X, AlertCircle, Info, Archive,
+  Loader2, Clock, Wand2, ThumbsUp, ShieldAlert, X, AlertCircle, Info, Archive, PhoneCall,
 } from 'lucide-react'
+import OutboundCallModal from '@/components/voice/OutboundCallModal'
 import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -63,6 +64,7 @@ export default function LeadDetailPage() {
   const [activeStage, setActiveStage] = useState('')
   const [showScoreModal, setShowScoreModal] = useState(false)
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
+  const [showCallModal, setShowCallModal] = useState(false)
 
   const archiveMutation = useMutation({
     mutationFn: () => api.delete(`/leads/${id}`),
@@ -213,6 +215,16 @@ export default function LeadDetailPage() {
               </button>
             ))}
           </div>
+
+          <Button
+            size="sm"
+            onClick={() => setShowCallModal(true)}
+            className="h-8 text-xs gap-1.5 ml-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+            title="Initiate AI Voice Call"
+          >
+            <PhoneCall className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">AI Call</span>
+          </Button>
 
           <Button
             variant="outline"
@@ -676,6 +688,18 @@ export default function LeadDetailPage() {
         cancelText="Cancel"
         variant="danger"
         isLoading={archiveMutation.isPending}
+      />
+
+      {/* Outbound AI Voice Call Modal */}
+      <OutboundCallModal
+        isOpen={showCallModal}
+        onClose={() => setShowCallModal(false)}
+        leadId={lead._id}
+        leadName={contact?.fullName}
+        leadPhone={contact?.phone}
+        onCallInitiated={() => {
+          queryClient.invalidateQueries({ queryKey: ['lead', id] })
+        }}
       />
     </div>
   )

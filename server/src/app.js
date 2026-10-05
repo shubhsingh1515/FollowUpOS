@@ -29,6 +29,7 @@ import webhookRoutes from './routes/webhooks.js';
 import adminRoutes from './routes/admin.js';
 import supportRoutes from './routes/support.js';
 import integrationsRoutes from './routes/integrations.js';
+import voiceRoutes from './routes/voiceRoutes.js';
 
 const app = express();
 
@@ -115,6 +116,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/copilot', copilotRoutes);
 app.use('/api/campaigns', campaignsRoutes);
+app.use('/api', voiceRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
